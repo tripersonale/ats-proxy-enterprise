@@ -141,10 +141,12 @@ sudo tail -5 /var/lib/trafficserver/log/trafficserver/audit.log
 
 | Limite | Dettaglio | Workaround |
 |--------|-----------|------------|
-| **Validazione credenziali** | Il 407 richiede auth, ma header_rewrite non valida password | Usare AuthProxy con server auth esterno (vedi Appendice A) |
+| **Validazione credenziali** | Il 407 richiede auth, ma header_rewrite non valida password | Usare AuthProxy con server auth esterno o ricompilare ATS con basic auth |
+| **Proxy-Authenticate header** | `set-header Proxy-Authenticate` NON viene emesso sulle risposte 407 sintetiche generate da `set-status`. Il client non sa che schema auth usare. | Pre-configurare il client con `--proxy-header "Proxy-Authorization: Basic ..."` o usare plugin auth dedicato |
 | **Ordine regole** | Le regole sono valutate in ordine; DENY deve venire prima di AUTH-GATED | Seguire il template |
 | **Numero condizioni** | Molte condizioni `[NOT]` possono rallentare il parsing | Raggruppare con regex dove possibile |
-| **Log 403/407** | I blocchi appaiono nell'audit log | ✅ già funzionante |
+| **Log 403/407** | I blocchi appaiono nell'audit log con FQDN | ✅ già funzionante |
+| **Regex** | Supportate con sintassi `/pattern/` | ✅ testato: `/httpbin/`, `/google/` funzionano |
 
 ---
 
@@ -173,3 +175,13 @@ authproxy.so --auth-transform=redirect --auth-host=127.0.0.1 --auth-port=9000
 ---
 
 *Testato su VM 130 (Ubuntu 24.04) e VM 134 (Ubuntu 26.04) con ATS 9.2.13*
+
+**Batteria test completa (24 Maggio 2026):**
+- ✅ Deny 403 da IP non-admin (cross-VM: VM134 → VM130)
+- ✅ Whitelist pass-through (google.com, github.com, ubuntu.com)
+- ✅ Auth-gated 407 per domini non in whitelist
+- ✅ Admin IP bypass (salta tutte le regole)
+- ✅ Regex deny (`/httpbin/`, `/google/`)
+- ✅ 10 richieste concorrenti con filtro attivo (tutte 403 corrette)
+- ✅ Log audit contiene FQDN per 403 e 407
+- ⚠️ Proxy-Authenticate header non emesso su 407 sintetico
