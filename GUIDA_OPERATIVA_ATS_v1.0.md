@@ -2,7 +2,7 @@
 
 ## Come si fanno le operazioni quotidiane
 
-**Versione 1.0 — 24 Maggio 2026**
+**Versione 1.1 — 24 Maggio 2026 — Aggiornata con compliance, debug, incident response**
 
 ---
 
@@ -114,15 +114,12 @@ In `ip_allow.yaml` **l'ordine CONTA** (first-match, come iptables). La prima reg
 curl -x http://PROXY_IP:8080 http://httpbin.org/ip
 
 # Da IP NON autorizzato (deve dare 403)
-# NOTA: NON testare da localhost! Localhost bypassa le ACL.
+# NOTA: Testare da IP remoto per risultati affidabili.
+# Da localhost, se 127.0.0.1 e in allow il test passa, ma UFW non viene testato.
 # Testare da un'altra macchina sulla stessa rete.
 ```
 
-**IMPORTANTE**: Non testare le ACL da localhost (127.0.0.1) — le richieste locali bypassano `ip_allow.yaml`.
-
-### Verifica ordine (non conta!)
-
-A differenza di iptables, in `ip_allow.yaml` **l'ordine delle regole NON conta**. Le regole piu specifiche vincono su quelle piu ampie a prescindere dalla posizione.
+**IMPORTANTE**: Testare le ACL da IP remoto. Da localhost il test non e rappresentativo: 127.0.0.1 e soggetto ad ACL normalmente, ma il loopback non passa da UFW, quindi il test non copre entrambi i layer di sicurezza.
 
 ---
 
@@ -355,7 +352,7 @@ grep url_remap /etc/trafficserver/records.config
 ### 403 Access Denied
 
 - Controllare `ip_allow.yaml` che il proprio IP/subnet sia in allow
-- **NON testare da localhost** (local bypass)
+- **Usare IP remoto per test** (localhost non testa UFW)
 - Fare reload: `traffic_ctl config reload`
 
 ### Log vuoti
@@ -439,6 +436,293 @@ $ for i in $(seq 1 10); do curl -s -o /dev/null -w "%{http_code} " -x http://192
 ```
 
 Tutte 200 — il proxy gestisce concorrenza senza errori.
+
+---
+
+## 10. Modalita Debug
+
+### Quando attivare il debug
+
+In produzione `diags.debug.enabled` e impostato a `0`. Attivare il debug solo per diagnostica temporanea:
+
+```bash
+# 1. Modificare records.config
+sudo sed -i 's/CONFIG proxy.config.diags.debug.enabled INT 0/CONFIG proxy.config.diags.debug.enabled INT 1/' /etc/trafficserver/records.config
+
+# 2. Aumentare verbosita diags (opzionale)
+echo 'CONFIG proxy.config.diags.debug.tags STRING http|dns|hostdb' | sudo tee -a /etc/trafficserver/records.config
+
+# 3. Restart (necessario per records.config)
+sudo systemctl restart trafficserver
+
+# 4. Monitorare output
+sudo tail -f /var/lib/trafficserver/log/trafficserver/diags.log
+sudo journalctl -u trafficserver -f
+```
+
+### Tag di debug utili
+
+| Tag | Cosa traccia |
+|-----|-------------|
+| `http` | Transazioni HTTP (header, status, errori) |
+| `dns` | Risoluzione DNS, cache, timeout |
+| `hostdb` | Host database, round-robin backend |
+| `cache` | Cache hit/miss, write, eviction |
+| `acl` | Valutazione ip_allow.yaml |
+| `socket` | Connessioni TCP, accept/connect/close |
+
+### Disattivare il debug
+
+```bash
+sudo sed -i 's/CONFIG proxy.config.diags.debug.enabled INT 1/CONFIG proxy.config.diags.debug.enabled INT 0/' /etc/trafficserver/records.config
+sudo sed -i '/proxy.config.diags.debug.tags/d' /etc/trafficserver/records.config
+sudo systemctl restart trafficserver
+```
+
+### Catturare traffico HTTP raw (tcpdump)
+
+```bash
+# Catturare traffico sulla porta proxy (debug estremo)
+sudo tcpdump -i any -A -s 0 port 8080 -w /tmp/ats-debug.pcap
+
+# Analizzare con:
+sudo tcpdump -r /tmp/ats-debug.pcap -A | less
+```
+
+---
+
+## 11. Compliance — Gestione Dati e GDPR
+
+### ⚠️ Avvertenza legale
+
+L'IP del client e considerato **dato personale** ai sensi del GDPR (Art. 4.1). Il log `audit.log` contiene dati personali. Il titolare del trattamento deve:
+
+1. **Definire la base giuridica** del trattamento (Art. 6 GDPR)
+2. **Fornire informativa** agli utenti (Art. 13-14 GDPR)
+3. **Registrare il trattamento** nel registro ex Art. 30
+4. **Valutare DPIA** se richiesto (Art. 35)
+
+### Retention policy configurata
+
+| Dato | File | Retention |
+|------|------|-----------|
+| Log accesso proxy | `audit.log` | Rolling 24h, auto-delete a 10000 MB |
+| Log di sistema | journald | 30 giorni |
+| Log diagnostici | `diags.log` | Rolling automatico |
+| Configurazioni | etckeeper git | Illimitato |
+
+### Procedura diritto di accesso (GDPR Art. 15)
+
+```bash
+# Estraggo tutte le richieste di un IP specifico
+sudo grep "^192.168.89.55 " /var/lib/trafficserver/log/trafficserver/audit.log*
+
+# Con timestamp leggibile e ordinamento
+sudo grep "^192.168.89.55 " /var/lib/trafficserver/log/trafficserver/audit.log* | sort -t'[' -k2
+```
+
+### Procedura diritto di cancellazione (GDPR Art. 17)
+
+```bash
+# 1. Fermare il proxy (per evitare scritture concorrenti)
+sudo systemctl stop trafficserver
+
+# 2. Rimuovere le righe dell'IP dai log (IN PLACE)
+sudo sed -i '/^192.168.89.55 /d' /var/lib/trafficserver/log/trafficserver/audit.log
+
+# 3. Verificare
+sudo grep "192.168.89.55" /var/lib/trafficserver/log/trafficserver/audit.log
+# Atteso: nessun output
+
+# 4. Riavviare
+sudo systemctl start trafficserver
+
+# NOTA: Per log ruotati (.old), applicare sed anche su quelli:
+sudo sed -i '/^192.168.89.55 /d' /var/lib/trafficserver/log/trafficserver/audit.log.old
+```
+
+### Anonimizzazione IP (GDPR by design)
+
+Per ridurre il rischio GDPR, valutare l'anonimizzazione degli IP nei log prima della scrittura:
+
+```yaml
+# In logging.yaml, sostituire %<chi> con hash SHA256 dell'IP
+# Richiede plugin custom o script di post-processing.
+
+# Alternativa: troncare ultimo ottetto (pseudo-anonimizzazione)
+# Da: 192.168.89.55  →  A: 192.168.89.0
+# Via script cron:
+# sudo sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+)\.[0-9]+ /\1.0 /' audit.log > audit-anon.log
+```
+
+### Template informativa (estratto)
+
+> *"L'accesso a Internet tramite il proxy aziendale e soggetto a registrazione. Vengono raccolti: indirizzo IP del dispositivo, nome host dei siti visitati (non gli URL completi), data e ora della richiesta. Il trattamento e effettuato per finalita di sicurezza della rete (legittimo interesse del titolare) e ottemperanza agli obblighi di legge (Art. 132 D.Lgs 196/2003). I dati sono conservati per 6 mesi e accessibili solo al personale autorizzato. Per esercitare i diritti di cui agli Art. 15-22 GDPR, contattare il DPO all'indirizzo [email]."*
+
+---
+
+## 12. Incident Response
+
+### Classificazione incidenti
+
+| Livello | Descrizione | Esempio |
+|---------|-------------|---------|
+| P1 — Critico | Proxy non disponibile o violazione confermata | Servizio down, data breach |
+| P2 — Alto | Degradazione funzionale o tentativo attacco in corso | Abuso proxy, scansione massiva |
+| P3 — Medio | Anomalia senza impatto immediato | Errori intermittenti, log warning |
+| P4 — Basso | Evento informativo | Tentativo singolo bloccato da ACL |
+
+### Procedura P1/P2 — Incident Response Flow
+
+```bash
+# === FASE 1: DETECTION ===
+# Identificare l'anomalia
+sudo tail -100 /var/lib/trafficserver/log/trafficserver/audit.log | grep -c " 403 "
+sudo journalctl -u trafficserver -p err --since "1 hour ago"
+sudo /opt/trafficserver/bin/traffic_ctl metric get proxy.process.http.incoming_requests
+
+# === FASE 2: ANALYSIS ===
+# Determinare IP malevolo
+sudo grep " 403 " /var/lib/trafficserver/log/trafficserver/audit.log | cut -d' ' -f1 | sort | uniq -c | sort -rn | head -20
+
+# Identificare pattern (es. brute force, scan)
+sudo grep "192.168.89.99" /var/lib/trafficserver/log/trafficserver/audit.log | cut -d' ' -f6 | sort | uniq -c | sort -rn
+
+# === FASE 3: CONTAINMENT ===
+# Blocco immediato IP malevolo
+sudo cp /etc/trafficserver/ip_allow.yaml /etc/trafficserver/ip_allow.yaml.bak.$(date +%s)
+# Inserire deny PRIMA degli allow usando sed:
+sudo sed -i '3i\  - apply: in\n    ip_addrs: 192.168.89.99/32\n    action: deny\n    method: ALL' /etc/trafficserver/ip_allow.yaml
+sudo systemctl restart trafficserver
+
+# Alternativa: blocco via UFW (piu drastico)
+sudo ufw deny from 192.168.89.99 to any port 8080 proto tcp
+
+# === FASE 4: EVIDENCE PRESERVATION ===
+# Backup immediato log e config
+sudo tar czf /root/incident-$(date +%Y%m%d-%H%M).tar.gz \
+  /var/lib/trafficserver/log/trafficserver/ \
+  /etc/trafficserver/ \
+  /var/log/auth.log
+```
+
+### Template notifica NIS2 (early warning 24h)
+
+```
+A: [ACN - CSIRT Italia / autorita competente NIS2]
+Oggetto: Early Warning Incidente NIS2 — ATS Proxy Enterprise
+
+1. SOGGETTO NOTIFICANTE
+   - Denominazione: [Nome Organizzazione]
+   - Referente: [Nome, telefono, email]
+   - Ruolo NIS2: [Essenziale / Importante]
+   - Settore: [es. Infrastrutture digitali]
+
+2. INCIDENTE
+   - Data/ora rilevamento: [YYYY-MM-DD HH:MM UTC]
+   - Data/ora presunto inizio: [YYYY-MM-DD HH:MM UTC]
+   - Stato: [In corso / Contenuto / Risolto]
+   - Classificazione: [P1 / P2 / P3]
+   - Descrizione sintetica: [Cosa e successo, impatto]
+
+3. IMPATTO
+   - Servizi impattati: [ATS Proxy Enterprise]
+   - Utenti impattati: [Numero]
+   - Dati eventualmente compromessi: [SI/NO, descrizione]
+   - Impatto transfrontaliero: [SI/NO, specificare paesi]
+
+4. AZIONI INTRAPRESE
+   - [Misure di containment]
+   - [Soggetti informati]
+```
+
+### Template notifica GDPR (Garante Privacy, Art. 33)
+
+```
+A: Garante per la Protezione dei Dati Personali
+Oggetto: Notifica violazione dati personali — Art. 33 GDPR
+
+1. NATURA DELLA VIOLAZIONE
+   - Categorie dati: [es. Indirizzi IP, log di navigazione]
+   - Numero interessati: [approssimativo]
+   - Volume dati: [approssimativo]
+   - Categorie interessati: [es. Dipendenti, utenti]
+
+2. CONSEGUENZE PROBABILI
+   - [Valutazione rischio per diritti e liberta]
+
+3. MISURE ADOTTATE
+   - [Containment, ripristino, mitigazione]
+
+4. REFERENTE
+   - DPO: [Nome, contatti]
+```
+
+---
+
+## 13. Gestione Richieste GDPR (Template Operativo)
+
+### Richiesta di accesso (Art. 15) — Procedura
+
+```bash
+#!/bin/bash
+# Script: gdpr-access.sh
+# Uso: sudo bash gdpr-access.sh 192.168.89.55
+
+IP="$1"
+OUTPUT="/tmp/gdpr-access-${IP//./-}-$(date +%Y%m%d).txt"
+
+echo "=== RAPPORTO ACCESSO DATI PERSONALI ===" > "$OUTPUT"
+echo "IP Richiesto: $IP" >> "$OUTPUT"
+echo "Data richiesta: $(date)" >> "$OUTPUT"
+echo "Periodo: ultimi 6 mesi" >> "$OUTPUT"
+echo "" >> "$OUTPUT"
+echo "=== LOG ACCESSO PROXY ===" >> "$OUTPUT"
+
+sudo grep "^$IP " /var/lib/trafficserver/log/trafficserver/audit.log* >> "$OUTPUT" 2>/dev/null
+
+echo "" >> "$OUTPUT"
+echo "=== FINE RAPPORTO ===" >> "$OUTPUT"
+echo "Rapporto generato da: $(whoami)" >> "$OUTPUT"
+
+cat "$OUTPUT"
+```
+
+### Richiesta di cancellazione (Art. 17) — Procedura
+
+```bash
+#!/bin/bash
+# Script: gdpr-delete.sh
+# Uso: sudo bash gdpr-delete.sh 192.168.89.55
+
+IP="$1"
+LOGDIR="/var/lib/trafficserver/log/trafficserver"
+BACKUP="/root/gdpr-delete-backup-$(date +%Y%m%d-%H%M).tar.gz"
+
+echo "=== CANCELLAZIONE DATI PERSONALI ==="
+echo "IP: $IP"
+echo "Backup prima della cancellazione: $BACKUP"
+
+# Backup prima di cancellare
+sudo tar czf "$BACKUP" "$LOGDIR"
+
+# Fermare il proxy
+sudo systemctl stop trafficserver
+
+# Cancellare dai log attivi e ruotati
+for f in "$LOGDIR"/audit.log*; do
+    if [ -f "$f" ]; then
+        sudo sed -i "/^$IP /d" "$f"
+        echo "Pulito: $f"
+    fi
+done
+
+# Riavviare
+sudo systemctl start trafficserver
+
+echo "Cancellazione completata per IP: $IP"
+echo "Backup conservato in: $BACKUP (cancellare dopo 30 giorni)"
+```
 
 ---
 

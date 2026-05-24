@@ -15,17 +15,23 @@
 - **Install dir**: /opt/trafficserver/
 
 ## Documentazione
-- **Guida Installazione**: `03_PROGETTI/ats-proxy/GUIDA_INSTALLAZIONE_ATS_v1.0.md`
-- **Guida Concettuale**: `03_PROGETTI/ats-proxy/GUIDA_CONCETTUALE_ATS_v1.0.md`
-- **Guida Operativa**: `03_PROGETTI/ats-proxy/GUIDA_OPERATIVA_ATS_v1.0.md`
+- **Guida Installazione (UNIFICATA)**: `GUIDA_INSTALLAZIONE_ATS_v3.0_UNIFICATA.md` — copre 24.04 e 26.04
+- **Guida Installazione 24.04**: `GUIDA_INSTALLAZIONE_ATS_v1.0.md` (v1.2, storico)
+- **Guida Installazione 26.04**: `GUIDA_INSTALLAZIONE_ATS_v2.0_UBUNTU_26.04.md` (v1.1, storico)
+- **Guida Concettuale**: `GUIDA_CONCETTUALE_ATS_v1.0.md`
+- **Guida Operativa**: `GUIDA_OPERATIVA_ATS_v1.0.md` (v1.1 — debug, compliance, incident response)
+- **Guida Upgrade + CVE**: `GUIDA_UPGRADE_CVE_v1.0.md` — aggiornamento, compatibilita, rollback
+- **Manifesto Principi**: `MANIFESTO_PRINCIPI_v1.0.md`
+- **Audit Sicurezza & Compliance**: `AUDIT_SICUREZZA_COMPLIANCE_v1.0.md`
+- **State Card 26.04**: `STATE_CARD_26.04.md`
 
 ## Stato
-🟢 **Operativo + Documentato** — Proxy forward funzionante, logging attivo, UFW configurato, 3 guide complete
+🟢 **24.04 Operativo + Hardened** — VM 130 (192.168.89.27). SSH hardening, fail2ban, etckeeper, systemd hardening applicati.
+🟢 **26.04 Operativo + Testato** — VM 134 (192.168.89.28). Compilato ATS 9.2.13 + PCRE1 8.45 da sorgente. Batteria test superata.
 
 ## Accesso
-- SSH: `ssh -i /tmp/vm-130-key ubuntu@192.168.89.27`
-- Chiave: `/tmp/vm-130-key` (ed25519)
-- Proxmox console: `qm terminal 130` (richiede serial device)
+- **VM 130 (24.04)**: `ssh -i /tmp/vm-130-key ubuntu@192.168.89.27`
+- **VM 134 (26.04)**: `ssh -i /tmp/vm-134-key ubuntu@192.168.89.28`
 
 ## Configurazioni attive
 - `records.config`: forward proxy su porta 8080, DNS via systemd-resolved
@@ -33,7 +39,11 @@
 - `logging.yaml`: formato audit (IP client, request, status, bytes, FQDN)
 - `storage.config`: 10 GB cache su /var/lib/trafficserver/cache
 - `remap.config`: vuoto (forward proxy puro)
-- Systemd: `/etc/systemd/system/trafficserver.service` (Type=forking)
+- Systemd: `/etc/systemd/system/trafficserver.service` (Type=forking + ProtectSystem=strict, NoNewPrivileges, PrivateTmp, MemoryHigh=2G)
+- SSH: key-only auth, root login disabilitato
+- fail2ban: jail SSH attivo
+- unattended-upgrades: security updates automatici
+- etckeeper: versionamento /etc/trafficserver con git
 
 ## Firewall
 - UFW: deny incoming, allow outgoing
@@ -41,7 +51,7 @@
 
 ## Prossime azioni
 - [ ] Aggiungere subnet aggiuntive a ip_allow.yaml per produzione
-- [ ] Testare ACL da IP remoto (NON localhost — bypassa)
+- [ ] Testare ACL da IP remoto (localhost non testa UFW)
 - [ ] Configurare plugin rate_limit se necessario
 - [ ] Testare sotto carico reale (>100 req/s)
 - [ ] Automatizzare backup configurazioni via cron
