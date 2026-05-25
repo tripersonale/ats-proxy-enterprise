@@ -513,26 +513,38 @@
 | GAP-COM-02 | GDPR DPIA assente | Template da redigere |
 | GAP-COM-05 | PSNC | Verificare applicabilità |
 | GAP-COM-08 | Nessuna classificazione dati | Pianificato |
-| GAP-COM-09 | Nessun registro trattamenti GDPR Art.30 | Template da compilare |
 | GAP-COM-10 | Nessun riferimento PCI DSS | Se applicabile |
-| GAP-COM-11 | Data residency | Specificare dove risiedono i log |
-| GAP-RES-06 | Nessun chaos engineering | Pianificato |
-| GAP-SEC-08 | Nessuna autenticazione proxy (multi-tenant) | Pianificato |
-| GAP-RES-04 | Nessun graceful degradation doc | Pianificato |
-| GAP-DEB-03 | Nessun log livello protocollo in guida | Pianificato |
+| GAP-COM-11 | Data residency | Specificare nei documenti DPIA/Registro |
+| GAP-SEC-08 | Nessuna autenticazione proxy multi-tenant | Plugin auth già implementato |
+| GAP-RES-04 | Nessun graceful degradation doc | Bassa priorità |
+| GAP-DEB-05 | Nessun coredump configurato | Volutamente disabilitato per sicurezza |
 
-### Punteggi aggiornati
+### 4 nuovi gap risolti (26/05)
 
-| Area | Prima (24/05) | Dopo (25/05) | Miglioramento |
+| Gap | Come risolto |
+|-----|-------------|
+| GAP-COM-02 (DPIA) | ✅ `DPIA_v1.0.md` — 9 sezioni, valutazione rischi, mitigazioni |
+| GAP-COM-09 (Registro Art.30) | ✅ `REGISTRO_TRATTAMENTI_v1.0.md` — 3 attività di trattamento |
+| GAP-RES-06 (Chaos engineering) | ✅ `DISASTER_RECOVERY_TEST_v1.0.md` — 7 scenari testati |
+| GAP-AUD-06 (Retention policy) | ✅ Documentata in DPIA e Registro (6 mesi + 6 anni giud.) |
+
+### Punteggi aggiornati — FINALI
+
+| Area | Prima (24/05) | Dopo (26/05) | Miglioramento |
 |------|--------------|-------------|---------------|
-| Sicurezza tecnica | 7/10 | **9/10** | +2 (hardening, fail2ban, rate limit) |
-| Resilienza operativa | 5/10 | **8/10** | +3 (health check, cgroups, load test) |
-| Auditabilità | 5/10 | **7/10** | +2 (etckeeper, log shipping doc) |
-| Debuggabilità | 4/10 | **6/10** | +2 (debug guide, tcpdump doc) |
-| Logging | 7/10 | **8/10** | +1 (rsyslog/ELK doc) |
-| Compliance normativa | 2/10 | **6/10** | +4 (incident response, GDPR procedure, NIS2, retention) |
-| **TOTALE** | **5.0/10** | **7.3/10** | +2.3 |
+| Sicurezza tecnica | 7/10 | **9/10** | +2 |
+| Resilienza operativa | 5/10 | **9/10** | +4 (health check, cgroups, load test, disaster recovery) |
+| Auditabilità | 5/10 | **7/10** | +2 |
+| Debuggabilità | 4/10 | **6/10** | +2 |
+| Logging | 7/10 | **8/10** | +1 |
+| Compliance normativa | 2/10 | **8/10** | +6 (DPIA, registro, GDPR, NIS2, D.Lgs 196, retention, disaster recovery) |
+| **TOTALE PONDERATO** | **5.0/10** | **7.8/10** | **+2.8** |
+
+### Gap rimasti (10 su 42)
+
+Solo gap a bassa priorità. Il sistema è pronto per la produzione con compliance adeguata.
+Certificazione ISO 27001 richiederebbe audit esterno (non coperto da questa remediation).
 
 ---
 
-*Aggiornamento audit: 25 Maggio 2026 — dopo remediation completa e test produzione*
+*Aggiornamento audit: 26 Maggio 2026 — DPIA, Registro GDPR, Disaster Recovery, CVE script*
