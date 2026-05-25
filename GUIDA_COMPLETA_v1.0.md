@@ -298,6 +298,12 @@ curl -s -o /dev/null -w '%{http_code}\n' --connect-timeout 5 -x http://localhost
 for i in $(seq 1 10); do curl -s -o /dev/null -w '%{http_code} ' --connect-timeout 5 -x http://localhost:8080 http://httpbin.org/ip & done; wait; echo ''
 # Atteso: 200 200 200 ...
 
+# 50 richieste concorrenti (test avanzato)
+for i in $(seq 1 50); do curl -s -o /dev/null -w '%{http_code} ' --connect-timeout 5 -x http://localhost:8080 http://httpbin.org/ip & done; wait; echo ''
+# Atteso: 403 403 403 ... (con plugin v2.1 attivo)
+# Risultato test VM134: 50×403 con plugin v2.1, nessun crash
+# Risultato test VM134: 50×301 con auth valida, nessun crash
+
 # Verifica sintassi config
 sudo /opt/trafficserver/bin/traffic_server -C verify_config
 ```
@@ -666,6 +672,7 @@ sudo aa-enforce /opt/trafficserver/bin/traffic_server
 | 403 invece di 200 da admin IP | ADMIN non nel config o config non letto | Verificare `grep 'admin IPs' diags.log` |
 | Plugin non caricato | Permessi .so o plugin.config | `chown ats:ats` su entrambi |
 | DNS cache gap | OS_DNS hook non scatta per domini cached | Normale. I domini appena visitati bypassano auth per ~minuti |
+| Plugin crasha su `TSMimeHdrFieldValueStringGet` | `value_len` passato come NULL | **Sempre passare `&vlen`** (int), mai NULL. Bug scoperto durante sviluppo plugin v2.1 |
 
 ---
 
