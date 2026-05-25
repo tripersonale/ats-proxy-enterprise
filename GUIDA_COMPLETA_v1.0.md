@@ -713,6 +713,10 @@ sudo fail2ban-client set ats-proxy unbanip <IP>
 sudo systemctl stop trafficserver
 sudo rm -f /var/lib/trafficserver/trafficserver/*.lock /var/lib/trafficserver/trafficserver/host.db
 sudo systemctl start trafficserver
+
+# Verifica CVE e versioni librerie
+sudo bash /opt/cve-check.sh
+sudo tail -20 /var/log/ats-cve.log
 ```
 
 ---

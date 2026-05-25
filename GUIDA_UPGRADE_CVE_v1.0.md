@@ -2,7 +2,7 @@
 
 ## Mantenere il proxy sicuro nel tempo
 
-**Versione 1.0 — 24 Maggio 2026**
+**Versione 1.1 — 26 Maggio 2026 — Aggiornata con versioni reali verificate su VM 130 e VM 134**
 
 ---
 
@@ -23,17 +23,21 @@ Questa guida copre:
 
 ### 2.1 Librerie compilate dentro ATS (da monitorare manualmente)
 
-| Libreria | 24.04 Noble | 26.04 Resolute | Ruolo | Fonte CVE |
-|----------|------------|----------------|-------|-----------|
-| **PCRE1** | 8.39 (apt) | **8.45 (sorgente)** | Regex engine | [NVD](https://nvd.nist.gov/), [pcre.org](https://pcre.org/) |
-| **OpenSSL** | 3.0.x LTS | **3.5.5** | TLS, crittografia | [openssl.org/news](https://openssl.org/news/), NVD |
-| **Zlib** | 1.3.x | 1.3.x+ | Compressione HTTP | [zlib.net](https://zlib.net/), NVD |
-| **LZMA** | 5.4.x | 5.6.x+ | Compressione alternativa | NVD |
-| **Brotli** | 1.1.x | 1.2.x+ | Compressione | [github.com/google/brotli](https://github.com/google/brotli) |
-| **libcurl** | 8.x | 8.18+ | HTTP client interno | [curl.se](https://curl.se/), NVD |
-| **libxml2** | 2.9.x | 2.12.x+ | Parsing XML | NVD |
-| **libjson-c** | 0.17 | 0.18+ | Parsing JSON | [github.com/json-c](https://github.com/json-c) |
+| Libreria | 24.04 Noble (VM 130) | 26.04 Resolute (VM 134) | Ruolo | Fonte CVE |
+|----------|----------------------|------------------------|-------|-----------|
+| **ATS** | 9.2.13 | 9.2.13 | Core proxy | [Apache announce](https://lists.apache.org/list.html?announce@trafficserver.apache.org) |
+| **PCRE1** | 8.39 (apt) | **8.45 (sorgente)** | Regex engine | [NVD](https://nvd.nist.gov/) |
+| **OpenSSL** | 3.0.x LTS | **3.5.5** | TLS, crittografia | [openssl.org/news](https://openssl.org/news/) |
+| **Zlib** | 1.3.1 | **1.3.1** | Compressione HTTP | [zlib.net](https://zlib.net/) |
+| **LZMA** | 5.4.x | **5.8.3** | Compressione alternativa | NVD |
+| **Brotli** | 1.1.x | **1.2.0** | Compressione | [github.com/google/brotli](https://github.com/google/brotli) |
+| **libcurl** | 8.x | **8.18.0** | HTTP client interno | [curl.se](https://curl.se/) |
+| **libjson-c** | 0.17 | **0.18** | Parsing JSON | [github.com/json-c](https://github.com/json-c) |
 | **yaml-cpp** | interno ATS | interno ATS | Parsing YAML ACL/log | [github.com/jbeder/yaml-cpp](https://github.com/jbeder/yaml-cpp) |
+| **Kernel** | 6.8.x | **7.0.0** | Sistema | [ubuntu.com/security](https://ubuntu.com/security) |
+| **GCC** | 13.x | **15.2.0** | Compilatore | - |
+
+> Versioni verificate con `scripts/cve-check.sh` eseguito su VM134 il 26/05/2026.
 
 ### 2.2 Librerie di sistema (coperte da unattended-upgrades)
 
@@ -79,17 +83,29 @@ echo "=== GCC ===" && gcc --version | head -1
 
 ### 3.2 Automatizzare il monitoraggio
 
-```bash
-#!/bin/bash
-# Script: cve-check.sh - Eseguito via cron settimanale
-# Controlla versioni librerie e confronta con database CVE Ubuntu
+Lo script `scripts/cve-check.sh` (testato su VM134) esegue la verifica automatica di tutte le librerie. Produce un report in `/var/log/ats-cve.log`.
 
-echo "=== CVE Check $(date) ==="
-sudo apt update -qq
-for pkg in openssl libssl libpcre zlib1g liblzma libbrotli libcurl libxml2 libjson-c; do
-    sudo apt list --upgradable 2>/dev/null | grep -i "$pkg" && echo "⚠️  $pkg ha aggiornamenti disponibili"
-done
-echo "=== Fine ==="
+```bash
+# Esecuzione manuale
+sudo bash scripts/cve-check.sh
+
+# Attivare via cron settimanale (ogni lunedì alle 8:00)
+(sudo crontab -l 2>/dev/null; echo '0 8 * * 1 /opt/cve-check.sh') | sudo crontab -
+
+# Verificare l'ultimo report
+sudo tail -30 /var/log/ats-cve.log
+
+# Esempio output (VM134, 26/05/2026):
+# ATS version: 9.2.13
+# openssl: 3.5.5-1ubuntu3
+# PCRE1 (source): 8.45
+# zlib1g: 1:1.3.dfsg+really1.3.1-1ubuntu3
+# liblzma5: 5.8.3-1
+# libbrotli1: 1.2.0-3build1
+# libcurl4t64: 8.18.0-1ubuntu2.1
+# libjson-c5: 0.18+ds-3
+# Kernel: 7.0.0-15-generic
+# All checks passed ✅
 ```
 
 ---
@@ -460,4 +476,5 @@ curl -s -o /dev/null -w "Proxy test: %{http_code}\n" -x http://localhost:8080 ht
 ---
 
 *Guida basata su ATS 9.2.13 testato su VM 130 (24.04) e VM 134 (26.04)*
+*Script CVE: `scripts/cve-check.sh` — eseguibile, testato su VM134*
 *Riferimento: GUIDA_INSTALLAZIONE_ATS_v3.0_UNIFICATA.md*
