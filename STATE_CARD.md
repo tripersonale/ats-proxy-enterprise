@@ -2,7 +2,8 @@
 
 ## Identità
 - **Progetto**: Apache Traffic Server — Proxy Outbound Enterprise
-- **Directory**: `03_PROGETTI/ICT/ats-proxy/`
+- **Directory**: `~/CULLA-instance/03_ICT/ats-proxy/`
+- **Repository GitHub**: `https://github.com/tripersonale/ats-proxy-enterprise.git`
 - **VM Proxmox**: ID 130, nome `ats-proxy-01`, IP `192.168.89.27`
 - **Creato**: 24 Maggio 2026
 
