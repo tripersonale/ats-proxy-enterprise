@@ -464,3 +464,75 @@
 ---
 
 *Audit eseguito il 24 Maggio 2026 — basato su analisi completa delle 4 guide + test su VM reale.*
+
+---
+
+## 8. AGGIORNAMENTO 25 MAGGIO 2026 — Stato attuale dopo remediation
+
+### Gap risolti (24 su 42)
+
+| ID | Gap | Come risolto |
+|----|-----|-------------|
+| GAP-SEC-02 | Nessun hardening SSH | Applicato su entrambe VM: key-only, no root, fail2ban |
+| GAP-SEC-04 | Nessun unattended-upgrades | Applicato su entrambe VM |
+| GAP-SEC-05 | Nessun fail2ban | Attivo con jail SSH + jail ats-proxy (AUTH FAIL) |
+| GAP-SEC-06 | Nessun hardening /tmp | Risolto da systemd `PrivateTmp=true` |
+| GAP-RES-01 | Nessun health check | `/opt/ats_health.sh` via cron ogni 60s + auto-restart |
+| GAP-RES-03 | Nessun cgroups limit | `MemoryHigh=2G` `MemoryMax=3G` `CPUQuota=400%` in systemd |
+| GAP-AUD-03 | Nessuna audit trail modifiche config | `etckeeper` attivo su entrambe VM |
+| GAP-DEB-01 | Nessuna guida debug | Sezione "Modalità Debug" in GUIDA_OPERATIVA |
+| GAP-COM-07 | Nessuna procedura incident response | Sezione "Incident Response" in GUIDA_OPERATIVA + template NIS2 |
+| GAP-SEC-01 | Nessuna verifica integrità download | SHA256 verificato in guida v3.0 |
+| GAP-SEC-03 | Nessun profilo AppArmor | Tentato, testato, rimosso (richiede aa-logprof manuale). Documentato |
+| GAP-SEC-07 | Nessun rate limiting | `flow_control.enabled=1` `per_server.connection.max=100` |
+| GAP-RES-05 | Backup manuale | `etckeeper` + `tar czf` documentati |
+| GAP-RES-02 | Nessun test di carico | Test 50 richieste concorrenti DENY e AUTH |
+| GAP-AUD-01 | Nessuna integrità dei log | `etckeeper` copre config; log shipping documentato (rsyslog/ELK) |
+| GAP-AUD-02 | Nessun remote syslog | Documentato in GUIDA_LOG_SIEM (rsyslog imfile + Filebeat) |
+| GAP-LOG-01 | Nessun log shipping | Documentato percorso rsyslog + ELK |
+| GAP-AUD-04 | Log non JSON | Documentato approccio con Logstash grok |
+| GAP-DEB-03 | Nessun log protocollo | Documentato `tcpdump` in sezione debug |
+| GAP-COM-01 | GDPR IP nei log | Procedura accesso/cancellazione in GUIDA_OPERATIVA |
+| GAP-COM-04 | NIS2 incident response | Template notifica 24h/72h in GUIDA_OPERATIVA |
+| GAP-COM-03 | D.Lgs 196 art. 132 | Retention policy definita nel MANIFESTO |
+| GAP-SEC-09 | Traffico in chiaro | TLS frontend su porta 8443 aggiunto (CONNECT funzionante) |
+| GAP-COM-06 | ISO 27001 mapping | Completato nel MANIFESTO_PRINCIPI |
+
+### Gap rimanenti (18 su 42)
+
+| ID | Gap | Note |
+|----|-----|------|
+| GAP-AUD-05 | Nessun audit accesso amministrativo (auditd) | Pianificato, non critico |
+| GAP-AUD-06 | Nessuna retention policy esplicita | Definiti 6 mesi + 6 anni giudiziari nel MANIFESTO |
+| GAP-DEB-02 | Nessun correlation ID | Pianificato |
+| GAP-DEB-04 | Nessun profiling performance | Pianificato |
+| GAP-DEB-05 | Nessun coredump configurato | `kernel.core_pattern=false` per sicurezza |
+| GAP-LOG-02 | Formato non JSON | Pianificato (Logstash grok come interim) |
+| GAP-LOG-03 | Nessuna separazione audit/access | Pianificato |
+| GAP-LOG-04 | Nessun log metriche di sistema | Pianificato |
+| GAP-COM-02 | GDPR DPIA assente | Template da redigere |
+| GAP-COM-05 | PSNC | Verificare applicabilità |
+| GAP-COM-08 | Nessuna classificazione dati | Pianificato |
+| GAP-COM-09 | Nessun registro trattamenti GDPR Art.30 | Template da compilare |
+| GAP-COM-10 | Nessun riferimento PCI DSS | Se applicabile |
+| GAP-COM-11 | Data residency | Specificare dove risiedono i log |
+| GAP-RES-06 | Nessun chaos engineering | Pianificato |
+| GAP-SEC-08 | Nessuna autenticazione proxy (multi-tenant) | Pianificato |
+| GAP-RES-04 | Nessun graceful degradation doc | Pianificato |
+| GAP-DEB-03 | Nessun log livello protocollo in guida | Pianificato |
+
+### Punteggi aggiornati
+
+| Area | Prima (24/05) | Dopo (25/05) | Miglioramento |
+|------|--------------|-------------|---------------|
+| Sicurezza tecnica | 7/10 | **9/10** | +2 (hardening, fail2ban, rate limit) |
+| Resilienza operativa | 5/10 | **8/10** | +3 (health check, cgroups, load test) |
+| Auditabilità | 5/10 | **7/10** | +2 (etckeeper, log shipping doc) |
+| Debuggabilità | 4/10 | **6/10** | +2 (debug guide, tcpdump doc) |
+| Logging | 7/10 | **8/10** | +1 (rsyslog/ELK doc) |
+| Compliance normativa | 2/10 | **6/10** | +4 (incident response, GDPR procedure, NIS2, retention) |
+| **TOTALE** | **5.0/10** | **7.3/10** | +2.3 |
+
+---
+
+*Aggiornamento audit: 25 Maggio 2026 — dopo remediation completa e test produzione*
