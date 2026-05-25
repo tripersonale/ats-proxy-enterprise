@@ -114,24 +114,64 @@ sudo tail -30 /var/log/ats-cve.log
 
 ### 4.1 Versioni testate
 
-| ATS | Ubuntu | PCRE1 | OpenSSL | GCC | Stato |
-|-----|--------|-------|---------|-----|-------|
-| 9.2.13 | 24.04 Noble | 8.39 (apt) | 3.0.x | 13.x | ✅ Testato VM 130 |
-| 9.2.13 | 26.04 Resolute | 8.45 (sorgente) | 3.5.5 | 15.2.0 | ✅ Testato VM 134 |
+| ATS | Ubuntu | PCRE1 | OpenSSL | GCC | Build System | Stato |
+|-----|--------|-------|---------|-----|-------------|-------|
+| 9.2.13 | 24.04 Noble | 8.39 (apt) | 3.0.x | 13.x | autotools | ✅ Testato VM 130 |
+| 9.2.13 | 26.04 Resolute | 8.45 (sorgente) | 3.5.5 | 15.2.0 | autotools | ✅ Testato VM 134 |
+| 10.1.2 | 26.04 | 8.45 | 3.5.5 | 15.2.0 | **CMake** | ⚠️ API check OK, build da completare |
 
-### 4.2 Verifiche prima di upgrade
+### 4.2 Differenze ATS 9.x → 10.x (verificato 25/05/2026)
+
+| Aspetto | 9.x | 10.x | Impatto sul plugin |
+|---------|-----|------|-------------------|
+| Build system | autotools (configure/make) | **CMake** | Nuova procedura, flag diversi |
+| TSUserArgSet/Get | ✅ | ✅ | **Compatibile** |
+| TSUserArgIndexReserve | ✅ | ✅ | **Compatibile** |
+| TSMimeHdrFieldValueStringGet | ✅ | ✅ | **Compatibile** |
+| TSHttpTxnClientReqGet | ✅ | ✅ | **Compatibile** |
+| TS_EVENT_HTTP_OS_DNS | 60003 | da verificare | Probabilmente invariato |
+| TS_HTTP_SEND_RESPONSE_HDR_HOOK | ✅ | ✅ | **Compatibile** |
+| Records format | records.config (key-value) | da verificare | Potrebbe essere YAML in 10.x |
+| Plugin API | Stabile | Stabile | **Plugin v2.1 dovrebbe funzionare** (da ricompilare contro headers 10.x) |
+
+### 4.3 Procedura upgrade a ATS 10.x (preliminare, da testare)
 
 ```bash
-# 1. Verificare la nuova versione ATS esista
-wget --spider https://downloads.apache.org/trafficserver/trafficserver-NUOVA_VERSIONE.tar.bz2
+# 1. Backup
+sudo systemctl stop trafficserver
+sudo cp -a /opt/trafficserver /opt/trafficserver.bak-9.2.13
+sudo cp -a /etc/trafficserver /etc/trafficserver.bak-9.2.13
 
-# 2. Leggere CHANGELOG / release notes
-# https://raw.githubusercontent.com/apache/trafficserver/refs/tags/NUOVA_VERSIONE/CHANGELOG
+# 2. Download e build (CMake)
+cd /tmp
+wget https://downloads.apache.org/trafficserver/trafficserver-10.1.2.tar.bz2
+tar -xjf trafficserver-10.1.2.tar.bz2 && cd trafficserver-10.1.2
+mkdir build && cd build
+cmake .. -DCMAKE_INSTALL_PREFIX=/opt/trafficserver \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DPCRE_LIBRARY=/usr/local/pcre/lib/libpcre.so \
+  -DPCRE_INCLUDE_DIR=/usr/local/pcre/include
+make -j$(nproc)
+sudo make install
 
-# 3. Verificare che le dipendenze siano compatibili
-# Controllare configure.ac nella nuova versione per requisiti minimi:
-# grep -E "PKG_CHECK|AC_CHECK" configure.ac | head -30
+# 3. Ricompilare plugin v2.1 contro nuove headers
+cd /tmp/trafficserver-10.1.2
+gcc -fPIC -shared -I. -I./include -o /tmp/ats_proxy_filter_v21.so \
+  ats_proxy_filter_v21.c
+
+# 4. Riavviare e testare
+sudo cp /tmp/ats_proxy_filter_v21.so /opt/trafficserver/lib/modules/ats_proxy_filter.so
+sudo ldconfig
+sudo systemctl start trafficserver
 ```
+
+⚠️ **ATTENZIONE**: La procedura di upgrade a 10.x NON è stata testata su VM reale.
+- API verificate compatibili
+- Build system cambiato (CMake)
+- Config format potrebbe essere cambiato (records.config → YAML?)
+- Plugin richiede ricompilazione
+
+**Raccomandazione**: Attendere un test completo prima di eseguire in produzione.
 
 ---
 

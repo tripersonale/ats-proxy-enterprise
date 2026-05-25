@@ -722,3 +722,19 @@ sudo tail -20 /var/log/ats-cve.log
 ---
 
 *Guida completa testata su VM 130 (Ubuntu 24.04) e VM 134 (Ubuntu 26.04) con ATS 9.2.13 — 25 Maggio 2026*
+
+## Appendix: Installazione automatizzata
+
+Per deployare automaticamente con un unico comando:
+
+```bash
+# Modalità interattiva (domande)
+sudo bash scripts/install-ats-proxy.sh
+
+# Modalità automatica (config file)
+cp scripts/ats-proxy.conf.example ats-proxy.conf
+# Editare ats-proxy.conf con i propri valori
+sudo bash scripts/install-ats-proxy.sh --config ats-proxy.conf
+```
+
+Lo script gestisce: OS detection, dipendenze, compilazione ATS, plugin, systemd, hardening, health check, TLS opzionale, verifica finale.
