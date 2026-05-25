@@ -2,7 +2,7 @@
 
 ## Identità
 - **Progetto**: Apache Traffic Server — Proxy Outbound Enterprise
-- **Directory**: `03_PROGETTI/ats-proxy/`
+- **Directory**: `03_PROGETTI/ICT/ats-proxy/`
 - **VM Proxmox**: ID 130, nome `ats-proxy-01`, IP `192.168.89.27`
 - **Creato**: 24 Maggio 2026
 
@@ -22,6 +22,9 @@
 - **Guida Operativa**: `GUIDA_OPERATIVA_ATS_v1.0.md` (v1.1 — debug, compliance, incident response)
 - **Guida Upgrade + CVE**: `GUIDA_UPGRADE_CVE_v1.0.md` — aggiornamento, compatibilita, rollback
 - **Manifesto Principi**: `MANIFESTO_PRINCIPI_v1.0.md`
+- **Guida URL Filtering**: `GUIDA_URL_FILTER_v1.0.md` — 3 livelli: Deny, Whitelist, Auth-Gated + Admin bypass
+- **Guida Log & SIEM**: `GUIDA_LOG_SIEM_v1.0.md` — forwarding audit log a syslog/ELK
+- **Guida Plugin Unificato**: `GUIDA_PLUGIN_UNIFICATO_v1.0.md` — header_rewrite + basic_auth
 - **Audit Sicurezza & Compliance**: `AUDIT_SICUREZZA_COMPLIANCE_v1.0.md`
 - **State Card 26.04**: `STATE_CARD_26.04.md`
 
