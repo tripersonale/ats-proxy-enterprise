@@ -139,14 +139,14 @@ sudo tail -5 /var/lib/trafficserver/log/trafficserver/audit.log
 
 ## 5. Limitazioni note
 
-| Limite | Dettaglio | Workaround |
+| Limite | Dettaglio | Soluzione |
 |--------|-----------|------------|
-| **Validazione credenziali** | Il 407 richiede auth, ma header_rewrite non valida password | Usare AuthProxy con server auth esterno o ricompilare ATS con basic auth |
-| **Proxy-Authenticate header** | `set-header Proxy-Authenticate` NON viene emesso sulle risposte 407 sintetiche generate da `set-status`. Il client non sa che schema auth usare. | Pre-configurare il client con `--proxy-header "Proxy-Authorization: Basic ..."` o usare plugin auth dedicato |
-| **Ordine regole** | Le regole sono valutate in ordine; DENY deve venire prima di AUTH-GATED | Seguire il template |
-| **Numero condizioni** | Molte condizioni `[NOT]` possono rallentare il parsing | Raggruppare con regex dove possibile |
-| **Log 403/407** | I blocchi appaiono nell'audit log con FQDN | ✅ già funzionante |
-| **Regex** | Supportate con sintassi `/pattern/` | ✅ testato: `/httpbin/`, `/google/` funzionano |
+| **Validazione credenziali** | header_rewrite da solo può solo rispondere 407, non verificare password | basic_auth plugin (Appendice A) |
+| **Proxy-Authenticate header** | `set-header Proxy-Authenticate` NON viene emesso sulle risposte 407 sintetiche di header_rewrite | basic_auth plugin lo emette correttamente |
+| **DNS cache gap** | basic_auth su OS_DNS_HOOK non scatta per domini con DNS cached | Accettabile per la maggior parte dei domini |
+| **Concorrenza >5** | Il plugin basic_auth di esempio ha race condition sotto carico elevato | Riscrivere plugin thread-safe per produzione |
+| **Ordine regole** | DENY deve venire prima di AUTH-GATED nel file | Seguire il template |
+| **Regex** | Supportate con sintassi `/pattern/` | ✅ funzionante |
 
 ---
 
@@ -160,28 +160,59 @@ sudo systemctl restart trafficserver
 
 ---
 
-## APPENDICE A — AuthProxy con server esterno
+## APPENDICE A — Basic Auth con plugin compilato
 
-Per validare le credenziali (non solo richiederle), usare `authproxy.so`:
+### Strada A — Plugin basic_auth (verificato funzionante il 24/05/2026)
+
+ATS 9.2.13 include un plugin di esempio `basic_auth.c` in `example/plugins/c-api/basic_auth/`. Compilato e testato su VM134:
 
 ```bash
-# plugin.config
-header_rewrite.so /etc/trafficserver/url_filter.conf
-authproxy.so --auth-transform=redirect --auth-host=127.0.0.1 --auth-port=9000
+cd /tmp/trafficserver-9.2.13
+# Modificare authorized() con utenti reali
+# es: if (strcmp(user, "admin") == 0 && strcmp(password, "proxy2026") == 0) return 1;
+
+gcc -fPIC -shared -I. -I./include -o /tmp/basic_auth.so example/plugins/c-api/basic_auth/basic_auth.c
+sudo cp /tmp/basic_auth.so /opt/trafficserver/lib/modules/
 ```
 
-**Attenzione**: In forward proxy mode, AuthProxy redirect NON inoltra l'Host originale al server auth. Il server auth riceve `Host: 127.0.0.1:9000` e non sa quale sito l'utente vuole visitare. Questo richiede un workaround (plugin Lua o header custom).
+```bash
+# plugin.config — header_rewrite PRIMA (deny), basic_auth DOPO (auth)
+cat > /etc/trafficserver/plugin.config << 'EOF'
+header_rewrite.so /etc/trafficserver/url_filter.conf
+basic_auth.so
+EOF
+```
+
+**Risultati testati**:
+- ✅ 407 + Proxy-Authenticate header corretto
+- ✅ 3 utenti validi (admin, user1, operator)
+- ✅ Credenziali errate → 407
+- ✅ DENY list blocca PRIMA dell'auth (403)
+- ✅ 5 richieste concorrenti ok
+- ⚠️ DNS cache gap: OS_DNS hook non scatta per domini con DNS cached
+- ⚠️ 10+ concorrenti: race condition (plugin example, non production-grade)
+
+### Strada B — AuthProxy con server esterno
+
+Alternativa: `authproxy.so` (già compilato). Delega auth a un server HTTP esterno. In forward proxy mode, la redirect non forwarda l'Host originale — richiede workaround.
+
+### Raccomandazione
+
+Per ambienti dove basta URL filtering (deny + whitelist), usare solo header_rewrite.
+Per ambienti che richiedono autenticazione reale, usare Strada A con basic_auth su OS_DNS hook, accettando il gap DNS cache.
 
 ---
 
 *Testato su VM 130 (Ubuntu 24.04) e VM 134 (Ubuntu 26.04) con ATS 9.2.13*
 
-**Batteria test completa (24 Maggio 2026):**
-- ✅ Deny 403 da IP non-admin (cross-VM: VM134 → VM130)
+**Batteria test completa (24-25 Maggio 2026):**
+- ✅ Deny 403 da IP non-admin (cross-VM e locale)
 - ✅ Whitelist pass-through (google.com, github.com, ubuntu.com)
-- ✅ Auth-gated 407 per domini non in whitelist
-- ✅ Admin IP bypass (salta tutte le regole)
+- ✅ Auth-gated 407 con basic_auth plugin (3 utenti)
+- ✅ Proxy-Authenticate header emesso da basic_auth
+- ✅ Admin IP bypass
 - ✅ Regex deny (`/httpbin/`, `/google/`)
-- ✅ 10 richieste concorrenti con filtro attivo (tutte 403 corrette)
+- ✅ 5 richieste concorrenti con auth attivo
 - ✅ Log audit contiene FQDN per 403 e 407
-- ⚠️ Proxy-Authenticate header non emesso su 407 sintetico
+- ⚠️ DNS cache gap: OS_DNS hook non scatta per domini cached
+- ⚠️ basic_auth di esempio: race condition sopra 5 concorrenti
