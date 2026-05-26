@@ -19,6 +19,10 @@
 - Full installer on VM136 Ubuntu 26.04: OK.
 - Regression on both VMs: `Passed: 9 Failed: 0`.
 - Hardening on both VMs: `Passed: 25 Failed: 0 Warnings: 0`.
+- Admin bypass from remote client IP `192.168.89.55` on VM135: DENY host bypassed (`200`) and auth-gated host bypassed (`301`) with `ADMIN bypass` logs.
+- DNS cache quick test on current plugin: repeated auth-gated no-auth requests remained `407` on VM135/VM136; repeated whitelist requests generated repeated plugin logs.
+- Old recovered plugin SHA `6a1a73...` tested temporarily on VM135: no better DNS-cache behavior observed; current plugin SHA `26c437...` restored.
+- ATS 10.1.2 raw-header compile check: not drop-in; requires C++17 and generated build headers.
 
 ### Known Limitations
 - ATS 10.x remains not validated.

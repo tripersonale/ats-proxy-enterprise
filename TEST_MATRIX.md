@@ -94,6 +94,20 @@ Passed: 25  Failed: 0  Warnings: 0
 | Area | Stato |
 |------|-------|
 | TLS frontend `ATS_TLS_ENABLED=y` | Non incluso nel test end-to-end del 2026-05-26 |
-| ATS 10.x | Non validato; non supportato come baseline |
-| DNS cache gap del plugin | Limite noto di `TS_HTTP_OS_DNS_HOOK`, documentato |
+| ATS 9.2.x minor successiva | Nessuna minor successiva a 9.2.13 pubblicata su `downloads.apache.org` al 2026-05-26 |
+| ATS 10.1.2 compile check raw headers | Non drop-in: `gcc` fallisce per richiesta C++17; `g++ -std=c++17` richiede header generati dal build system (`ts/apidefs.h`) |
+| DNS cache gap del plugin corrente | Test rapido VM135/VM136 non lo riproduce: auth valida a `reddit.com` poi no-auth resta `407`; 5 richieste consecutive whitelist generano 5 log `WHITELIST` |
+| DNS cache gap vecchio plugin recuperato | Test rapido VM135 con SHA `6a1a73...`: auth valida `301`, poi no-auth `407`; non dimostra soluzione diversa dal plugin corrente |
 | Carico oltre 50 concorrenti | Non validato in questa sessione |
+
+## Test Mirati Aggiunti Il 2026-05-26
+
+| Test | Target | Esito |
+|------|--------|-------|
+| DNS cache auth-gated corrente | VM135 | `first_auth=301`, `second_noauth=407`, `third_noauth=407` |
+| DNS cache auth-gated corrente | VM136 | `first_auth=301`, `second_noauth=407`, `third_noauth=407` |
+| Hook whitelist ripetuto corrente | VM135 | 5 richieste `google.com` -> 5 log `WHITELIST google.com -> pass` |
+| Hook whitelist ripetuto corrente | VM136 | 5 richieste `google.com` -> 5 log `WHITELIST google.com -> pass` |
+| Admin bypass remoto | VM135, client `192.168.89.55` | `httpbin.org` senza auth -> `200`; `reddit.com` senza auth -> `301`; log `ADMIN bypass` presente |
+| Vecchio plugin recuperato | VM135, SHA `6a1a73ff015ced9d6d35631fecf318d860bfbbf59b6066dcb3eecb8490d8f9c7` | Nessun vantaggio osservato su DNS cache rispetto al plugin corrente |
+| Ripristino plugin corrente | VM135 | SHA ripristinato `26c4371d0c32377498afeb80eb874a11bed2ac8c749c600073356bb3c2087674` |
