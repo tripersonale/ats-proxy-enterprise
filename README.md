@@ -362,7 +362,7 @@ Per ogni azione su questo progetto, le 6 domande del MANIFESTO_ICT.md v1.0:
 3. **E documentato abbastanza da essere ripreso tra 6 mesi?** ✅ — Questo README, installer commentato, guide testate, etckeeper.
 4. **I segreti sono separati dal metodo?** ✅ — Metodo/Istanza/Segreti: config file locali esclusi da Git, env template senza valori reali.
 5. **Serve una DPIA?** ✅ — DPIA presente (`DPIA_v1.0.md`), registro trattamenti (`REGISTRO_TRATTAMENTI_v1.0.md`), retention documentata.
-6. **Se domani non ci sono piu, qualcuno puo capirlo?** ✅ — `GUIDA_INSTALLAZIONE_TESTATA.md`, `GUIDA_AGGIORNAMENTO_TESTATA.md`, runbook, test, CHANGELOG.
+6. **Se domani non ci sono piu, qualcuno puo capirlo?** ✅ — `GUIDA_INSTALLAZIONE.md`, `GUIDA_OPERATIVA.md`, installer commentato, test, CHANGELOG.
 
 ---
 
@@ -435,8 +435,8 @@ Hardening coperto: systemd sandbox, UFW, fail2ban `sshd` e `ats-proxy`, unattend
 
 | Documento | Scopo |
 |-----------|-------|
-| [`GUIDA_INSTALLAZIONE_TESTATA.md`](GUIDA_INSTALLAZIONE_TESTATA.md) | Installazione supportata e verificata |
-| [`GUIDA_AGGIORNAMENTO_TESTATA.md`](GUIDA_AGGIORNAMENTO_TESTATA.md) | Aggiornamento sicuro entro baseline ATS 9.2.13; ATS 10.x non validato |
+| [`GUIDA_INSTALLAZIONE.md`](GUIDA_INSTALLAZIONE.md) | Installazione completa — manuale e automatizzato, dual-OS |
+| [`GUIDA_OPERATIVA.md`](GUIDA_OPERATIVA.md) | Operativita quotidiana, upgrade, CVE, GDPR, incident response |
 | [`GUIDA_TRASFERIMENTO_VM_v1.0.md`](GUIDA_TRASFERIMENTO_VM_v1.0.md) | Flusso repo privata → pacchetto → VM |
 | [`AUDIT_SICUREZZA_COMPLIANCE_v1.0.md`](AUDIT_SICUREZZA_COMPLIANCE_v1.0.md) | Audit sicurezza e compliance normativa |
 | [`DPIA_v1.0.md`](DPIA_v1.0.md) | Data Protection Impact Assessment |
@@ -465,7 +465,7 @@ sudo bash scripts/ats-hardening-check.sh 8080
 ## Limiti Noti
 
 - Il plugin usa `TS_HTTP_OS_DNS_HOOK`: la cache DNS di ATS puo evitare hook successivi per domini gia risolti. Il comportamento e noto, documentato in `TEST_MATRIX.md`, e non ha mostrato differenze tra plugin corrente e vecchio binario recuperato. Da considerare nella policy di change/restart.
-- ATS 10.x non e validato: fallisce build drop-in con `gcc` (richiede C++17) e con `g++ -std=c++17` (richiede header generati dal build system). Non aggiornare produzione ad ATS 10.x finche `GUIDA_AGGIORNAMENTO_TESTATA.md` non riporta test reali.
+- ATS 10.x non e validato: fallisce build drop-in con `gcc` (richiede C++17) e con `g++ -std=c++17` (richiede header generati dal build system). Non aggiornare produzione ad ATS 10.x finche `GUIDA_OPERATIVA.md` §10 non riporta test reali.
 - TLS frontend su porta 8443 e implementato nell'installer (`ATS_TLS_ENABLED=y`) ma non incluso nella batteria end-to-end del 2026-05-26.
 - Carico oltre 50 richieste concorrenti non validato in questa sessione.
 - Procedura formale di vulnerability assessment non ancora definita.
