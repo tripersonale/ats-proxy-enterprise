@@ -2,8 +2,8 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-EXPECTED_PLUGIN_SO_SHA256="6a1a73ff015ced9d6d35631fecf318d860bfbbf59b6066dcb3eecb8490d8f9c7"
-EXPECTED_PLUGIN_C_SHA256="35c2a1e4c6dec45d52f5e38fd58d640416ba22fcec77cf9087e03cce89f797e4"
+EXPECTED_PLUGIN_SO_SHA256="26c4371d0c32377498afeb80eb874a11bed2ac8c749c600073356bb3c2087674"
+EXPECTED_PLUGIN_C_SHA256="ac742e549c3081af44c320117ce0a8a1e8d9b80dbb76327f154e7d0797a7ffea"
 
 err() { printf '[ERROR] %s\n' "$1" >&2; exit 1; }
 ok() { printf '[OK] %s\n' "$1"; }

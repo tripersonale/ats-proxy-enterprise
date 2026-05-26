@@ -463,8 +463,8 @@ EOF
 # ============================================================================
 deploy_plugin() {
   log "Deploying plugin..."
-
-  sudo install -o ats -g ats -m 755 "$PLUGIN_PATH" /opt/trafficserver/lib/modules/ats_proxy_filter.so
+  sudo mkdir -p /opt/trafficserver/libexec/trafficserver
+  sudo install -o ats -g ats -m 755 "$PLUGIN_PATH" /opt/trafficserver/libexec/trafficserver/ats_proxy_filter.so
 
   log "Plugin deployed"
 }

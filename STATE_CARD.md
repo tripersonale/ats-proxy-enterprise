@@ -62,8 +62,10 @@
 - [ ] Recuperare accesso VM134 e salvare chiave in `~/CULLA-instance/01_SECRETS/ssh/`
 - [x] Recuperare plugin binario da VM130/VM134 e versionarlo come `bin/ats_proxy_filter_v21.so`
 - [x] Ricostruire sorgente C `src/ats_proxy_filter_v21.c` e versionarlo in repo
-- [ ] Compilare e validare `src/ats_proxy_filter_v21.c` su ATS 9.2.13 in VM
-- [ ] Testare installer `scripts/install-ats-proxy.sh` su VM pulita
+- [x] Compilare e validare `src/ats_proxy_filter_v21.c` su ATS 9.2.13 in VM (VM135 24.04 + VM136 26.04)
+- [x] Compilare e validare plugin su Ubuntu 26.04 (VM136)
+- [ ] Testare installer `scripts/install-ats-proxy.sh` su VM pulita end-to-end (WIP: manual build + config works, installer has wget issue)
+- [ ] Completare build + test plugin ricostruito su ATS 10.x in laboratorio
 - [ ] Completare build + test plugin ricostruito su ATS 10.x in laboratorio
 - [ ] Aggiungere subnet aggiuntive a ip_allow.yaml per produzione
 - [ ] Testare sotto carico reale (>100 req/s) e misurare latenza
@@ -96,4 +98,4 @@
 - Mai `ufw enable` senza prima `ufw allow 22/tcp`
 
 ---
-*Ultimo aggiornamento: 26 Maggio 2026 — Sorgente ricostruito e versionato, versione 0.11.0*
+*Ultimo aggiornamento: 26 Maggio 2026 — Sorgente compilato e testato su VM reali, binario ricostruito, versione 0.12.0*

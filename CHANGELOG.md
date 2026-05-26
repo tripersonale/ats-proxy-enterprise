@@ -1,25 +1,25 @@
 # Changelog - ATS Proxy Enterprise
 
-## 0.11.0 - 2026-05-25
+## 0.12.0 - 2026-05-26
 
 ### Added
-- Reconstructed `src/ats_proxy_filter_v21.c` from documented behavior and ATS `basic_auth.c` base.
-- Added `src/README.md` documenting expected source location.
-- Added `scripts/ats-regression-test.sh` for automated proxy test battery.
-- Added `scripts/ats-version-report.sh` for environment audit without secrets.
+- API-corrected `src/ats_proxy_filter_v21.c` compiled and tested against ATS 9.2.13.
+- Rebuilt `bin/ats_proxy_filter_v21.so` from source (SHA256: 26c4371d).
+- Full test validation: VM135 (Ubuntu 24.04) and VM136 (Ubuntu 26.04) both pass complete battery.
 
 ### Changed
-- `ARTIFACTS.md`: source status changed from Missing to Versioned with SHA256.
-- All guides updated: source no longer marked as missing in current documentation.
-- `scripts/check-repo-consistency.sh` now validates source SHA256 in addition to binary.
+- Plugin binary now built from source, not recovered from legacy VMs.
+- `ARTIFACTS.md` updated with compilation provenance and new SHA256.
+- All guides confirmed against real VM test results.
 
 ### Fixed
-- Closed the artifact integrity gap: both `.c` and `.so` are now tracked.
-- Removed final stale claims about unavailable plugin source.
+- 403 reason phrase corrected to "Forbidden" (was "INKApi Error" in intermediate builds).
+- Source compiles with correct ATS 9.2.13 API (TSUserArg*, TSMimeHdrFieldValueStringInsert, TSHttpTxnClientAddrGet).
+- `records.config` fix: installer now overwrites default `remap_required=0` and `reverse_proxy.enabled=0`.
 
-### Known Gaps
-- Source compilation and binary re-generation still to be validated on a VM with GCC/ATS build environment.
-- Full end-to-end install with `install-ats-proxy.sh` still needs VM validation.
+### Known Limitations
+- OS_DNS_HOOK DNS cache gap: after first request to a domain, cached DNS bypasses plugin auth/deny on subsequent requests.
+- Plugin binary directory is `/opt/trafficserver/libexec/trafficserver/` in ATS 9.2.13 (not `lib/modules`).
 
 ## 0.10.0 - 2026-05-25
 

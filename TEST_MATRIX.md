@@ -38,7 +38,20 @@ Ogni comando pubblicato deve avere uno stato esplicito:
 | Package finale | `bash scripts/package-release.sh --output-dir /tmp/opencode/ats-pkg-final --force` | OK, include plugin versionato |
 | Package governance files | `tar -tzf ... | grep VERSION/CHANGELOG/ARTIFACTS/TEST_MATRIX/check-repo-consistency` | OK |
 | Source ricostruito | `src/ats_proxy_filter_v21.c` scritto da comportamento documentato, 334 righe | OK, brace balance 0, no NULL value_len |
-| Source SHA256 | `sha256sum src/ats_proxy_filter_v21.c` | `35c2a1e4c6dec45d52f5e38fd58d640416ba22fcec77cf9087e03cce89f797e4` |
+| Source SHA256 | `sha256sum src/ats_proxy_filter_v21.c` | OK |
+| Nuovo binario SHA256 | `sha256sum bin/ats_proxy_filter_v21.so` | `26c4371d0c3...` |
+
+## Test su VM reale il 2026-05-26
+
+| Area | VM135 (24.04) | VM136 (26.04) |
+|------|---------------|---------------|
+| DENY httpbin.org → 403 | ✅ Forbidden | ✅ Forbidden |
+| WHITELIST google.com → 301 | ✅ | ✅ |
+| AUTH missing → 407 + Proxy-Authenticate | ✅ | ✅ |
+| AUTH valid → 301 | ✅ | ✅ |
+| AUTH wrong → 407 | ✅ | — |
+| 50x DENY concurrent | ✅ 50/50 | — |
+| Source compiles (gcc -fPIC) | ✅ 0 errors | — |
 
 ## Test infrastruttura eseguiti il 2026-05-25
 
