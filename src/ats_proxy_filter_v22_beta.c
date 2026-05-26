@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define CFG_PATH "/etc/trafficserver/ats_proxy_filter.conf"
+/* CFG_PATH resolved via TSConfigDirGet() at runtime, no hardcoded prefix */
 #define MAX_ADMIN 16
 #define MAX_DENY 64
 #define MAX_WHITE 64
@@ -264,9 +264,11 @@ static int handle_dns(TSCont contp, TSEvent event, void *edata) {
 }
 
 static void load_cfg(void) {
-  FILE *f = fopen(CFG_PATH, "r");
+  char cfg_path[512];
+  snprintf(cfg_path, sizeof(cfg_path), "%s/ats_proxy_filter.conf", TSConfigDirGet());
+  FILE *f = fopen(cfg_path, "r");
   if (!f) {
-    TSError("[ats_proxy_filter_v22_beta] cannot open config: %s", CFG_PATH);
+    TSError("[ats_proxy_filter_v22_beta] cannot open config: %s", cfg_path);
     return;
   }
 
