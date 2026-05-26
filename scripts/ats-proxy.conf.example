@@ -1,7 +1,14 @@
-# ATS Proxy Enterprise — Config file template
-# Rinomina in ats-proxy.conf e compila, poi esegui:
-#   ./install-ats-proxy.sh --config ats-proxy.conf
-# Oppure lascia vuoto per la modalità interattiva.
+# ATS Proxy Enterprise - legacy config file template
+#
+# Preferred workflow:
+#   cp env/ats-proxy.env.example ats-proxy.env
+#   sudo bash scripts/install-ats-proxy.sh --env ats-proxy.env --non-interactive
+#
+# Legacy workflow:
+#   cp scripts/ats-proxy.conf.example ats-proxy.conf
+#   sudo bash scripts/install-ats-proxy.sh --config ats-proxy.conf --non-interactive
+#
+# Do not commit the copied ats-proxy.conf file.
 
 # Network
 HOSTNAME=ats-proxy-01
@@ -21,14 +28,22 @@ DENY_DOMAINS=httpbin.org,bad.com,malware.net,.*\.ru$
 # Domini WHITELIST — accesso libero senza autenticazione
 WHITELIST_DOMAINS=google.com,github.com,ubuntu.com,example.com
 
-# Utenti per autenticazione proxy (user:password) — separati da virgola
-AUTH_USERS=admin:proxy2026,user1:pass123,operator:op3rat0r
+# Utenti per autenticazione proxy (user:password) — separati da virgola.
+# Sostituire ogni CHANGE_ME prima di eseguire l'installer.
+AUTH_USERS=admin:CHANGE_ME,user1:CHANGE_ME
 
-# Rotte statiche (net/gw) — separati da virgola. Lascia vuoto se non servono
+# Rotte statiche (net:gw) — separati da virgola. Lascia vuoto se non servono
 STATIC_ROUTES=
 
 # Porta proxy
 PROXY_PORT=8080
 
+# Applicare configurazione statica netplan? Default sicuro: no.
+# Impostare y solo su VM pulita o con console Proxmox disponibile.
+APPLY_NETPLAN=n
+
 # Abilitare TLS su porta 8443? (y/n)
 TLS_ENABLED=n
+
+# Path del plugin binario v2.1 recuperato dalle VM validate.
+PLUGIN_PATH=./bin/ats_proxy_filter_v21.so

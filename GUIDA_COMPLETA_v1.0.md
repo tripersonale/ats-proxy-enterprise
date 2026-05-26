@@ -314,9 +314,11 @@ sudo /opt/trafficserver/bin/traffic_server -C verify_config
 
 ### 7.1 Copia il plugin
 
+> Stato artefatti: binario e sorgente C sono versionati. Il sorgente `src/ats_proxy_filter_v21.c` e stato ricostruito da comportamento documentato e va compilato con ATS 9.2.13 per validazione funzionale contro il binario recuperato.
+
 ```bash
-# Il plugin è compilato da ats_proxy_filter_v21.c
-sudo cp ats_proxy_filter.so /opt/trafficserver/lib/modules/
+# Il plugin v2.1 recuperato dalle VM validate e versionato in bin/
+sudo cp bin/ats_proxy_filter_v21.so /opt/trafficserver/lib/modules/ats_proxy_filter.so
 sudo chown ats:ats /opt/trafficserver/lib/modules/ats_proxy_filter.so
 ```
 
@@ -341,9 +343,9 @@ WHITELIST ubuntu.com
 WHITELIST example.com
 
 # Utenti per autenticazione Basic Proxy
-USER admin proxy2026
-USER user1 pass123
-USER operator op3rat0r
+USER admin INSERIRE_PASSWORD_FORTE
+USER user1 INSERIRE_PASSWORD_FORTE
+USER operator INSERIRE_PASSWORD_FORTE
 EOF
 ```
 
@@ -371,7 +373,7 @@ curl -s -o /dev/null -w '%{http_code}\n' --connect-timeout 3 -x http://localhost
 curl -s -o /dev/null -w '%{http_code}\n' --connect-timeout 3 -x http://localhost:8080 http://reddit.com
 
 # AUTH con credenziali valide → 200/301
-curl -s -o /dev/null -w '%{http_code}\n' --connect-timeout 3 -x http://localhost:8080 --proxy-user admin:proxy2026 http://reddit.com
+curl -s -o /dev/null -w '%{http_code}\n' --connect-timeout 3 -x http://localhost:8080 --proxy-user admin:INSERIRE_PASSWORD http://reddit.com
 
 # AUTH con credenziali errate → 407
 curl -s -o /dev/null -w '%{http_code}\n' --connect-timeout 3 -x http://localhost:8080 --proxy-user wrong:wrong http://reddit.com
@@ -488,7 +490,8 @@ HEOF
 
 sudo chmod +x /opt/ats_health.sh
 sudo touch /var/log/ats-health.log
-sudo chmod 666 /var/log/ats-health.log
+sudo chown root:adm /var/log/ats-health.log
+sudo chmod 640 /var/log/ats-health.log
 
 # Cron ogni 60 secondi
 (sudo crontab -l 2>/dev/null; echo '* * * * * /opt/ats_health.sh') | sudo crontab -
@@ -731,10 +734,14 @@ Per deployare automaticamente con un unico comando:
 # Modalità interattiva (domande)
 sudo bash scripts/install-ats-proxy.sh
 
-# Modalità automatica (config file)
-cp scripts/ats-proxy.conf.example ats-proxy.conf
-# Editare ats-proxy.conf con i propri valori
-sudo bash scripts/install-ats-proxy.sh --config ats-proxy.conf
+# Modalità automatica replicabile (env file)
+cp env/ats-proxy.env.example ats-proxy.env
+# Editare ats-proxy.env con i propri valori e ATS_PLUGIN_PATH
+bash scripts/preflight.sh --env ats-proxy.env
+sudo bash scripts/install-ats-proxy.sh --env ats-proxy.env --non-interactive
 ```
 
 Lo script gestisce: OS detection, dipendenze, compilazione ATS, plugin, systemd, hardening, health check, TLS opzionale, verifica finale.
+
+Stato: installer scritto ma da validare end-to-end su VM pulita. Prima del test reale eseguire `scripts/preflight.sh` e verificare che `ATS_PLUGIN_PATH` punti a `./bin/ats_proxy_filter_v21.so` o a un altro file plugin esplicito.
+La configurazione statica netplan e disabilitata di default (`APPLY_NETPLAN=n`) per ridurre il rischio di lockout SSH; abilitarla solo su VM pulita o con console Proxmox disponibile.

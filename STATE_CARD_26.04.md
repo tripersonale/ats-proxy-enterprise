@@ -6,10 +6,10 @@
 - **ATS**: 9.2.13 LTS (compilato da sorgente + PCRE1 8.45)
 - **VM Proxmox**: ID 134, nome `ats-proxy-02`, IP `192.168.89.28`
 - **Creato**: 24 Maggio 2026
-- **Guida riferimento**: `GUIDA_INSTALLAZIONE_ATS_v2.0_UBUNTU_26.04.md` (v1.1, testata)
+- **Guida riferimento**: `GUIDA_INSTALLAZIONE_ATS_v3.0_UNIFICATA.md` e `GUIDA_COMPLETA_v1.0.md`
 
 ## Stack
-- **OS**: Ubuntu 26.04 LTS (Resolute Raccoon) — kernel 6.14+
+- **OS**: Ubuntu 26.04 LTS (Resolute Raccoon) — kernel rilevato da verificare con `uname -r`
 - **ATS**: 9.2.13 LTS (compilato da sorgente)
 - **PCRE**: 8.45 (compilato da sorgente in /usr/local/pcre)
 - **Toolchain reale**: GCC 15.2.0, OpenSSL 3.5.5, PCRE2 10.46 (nativo)
@@ -19,10 +19,10 @@
 - **Install dir**: /opt/trafficserver/
 
 ## Documentazione
-- **Guida Installazione 26.04**: `GUIDA_INSTALLAZIONE_ATS_v2.0_UBUNTU_26.04.md`
+- **Guida Installazione corrente**: `GUIDA_INSTALLAZIONE_ATS_v3.0_UNIFICATA.md`
 - **Guida Concettuale**: `GUIDA_CONCETTUALE_ATS_v1.0.md` (invariata, ATS e lo stesso)
 - **Guida Operativa**: `GUIDA_OPERATIVA_ATS_v1.0.md` (invariata, operazioni identiche)
-- **Guida Installazione 24.04**: `GUIDA_INSTALLAZIONE_ATS_v1.0.md` (originale)
+- **Guide installazione storiche**: `archive/storico/GUIDA_INSTALLAZIONE_ATS_v1.0.md`, `archive/storico/GUIDA_INSTALLAZIONE_ATS_v2.0_UBUNTU_26.04.md`
 - **Audit Sicurezza & Compliance**: `AUDIT_SICUREZZA_COMPLIANCE_v1.0.md`
 
 ## Differenze rispetto a 24.04
@@ -30,9 +30,9 @@
 | Aspetto | 24.04 Noble | 26.04 Resolute |
 |---------|------------|----------------|
 | Kernel | 6.8.x | 6.14.x+ |
-| GCC | 13.x | 14.x |
-| OpenSSL | 3.0.x LTS | 3.4.x |
-| PCRE1 (libpcre3) | Disponibile | Probabilmente rimosso |
+| GCC | 13.x | **15.2.0** |
+| OpenSSL | 3.0.x LTS | **3.5.5** |
+| PCRE1 (libpcre3) | Disponibile | Rimosso dai repo; usare PCRE1 8.45 da sorgente |
 | Systemd hardening base | Minimo | ProtectSystem=strict, PrivateTmp, NoNewPrivileges |
 | Firewall backend | iptables | nftables (UFW trasparente) |
 | SSH hardening | Non documentato | Aggiunto (key-only, no root) |
@@ -52,15 +52,15 @@
 
 ## Gap aperti (da AUDIT — validi per entrambe le versioni)
 
-### Critici da risolvere
-- [ ] GDPR: IP nei log = dato personale → retention policy, informativa, DPIA
-- [ ] D.Lgs 196/2003 Art. 132: conservazione 6 anni dati traffico
-- [ ] NIS2: procedura incident response con template notifica
-- [ ] Remote syslog / centralizzazione log
-- [ ] Fail2ban per SSH e proxy
-- [ ] Health check automatico + alerting
-- [ ] Test di carico >10 req/s (100, 500, 1000)
+### Critici residui
+- [x] DPIA e registro trattamenti creati come baseline documentale
+- [x] Fail2ban per SSH e proxy documentato/installabile
+- [x] Health check automatico documentato/installabile
+- [x] Test di carico a 50 concorrenti completato su plugin v2.1
+- [ ] Test installer su VM pulita
+- [ ] Remote syslog / centralizzazione log in produzione
 - [ ] AppArmor profilo per ATS
+- [ ] Test di carico >100 req/s con benchmark latenza
 
 ### Medi da pianificare
 - [ ] Log JSON strutturati
@@ -103,10 +103,10 @@
 ## Note tecniche
 - `logging.yaml` ha priorita su `logs_xml.config` in ATS 9.2.x
 - `url_remap.remap_required=0` e OBBLIGATORIO per forward proxy
-- PCRE1 (`libpcre3-dev`) potrebbe mancare su 26.04 — usare `--enable-pcre2` o compilare PCRE1 da sorgente
+- PCRE1 (`libpcre3-dev`) manca su 26.04 — `--enable-pcre2` non funziona con ATS 9.2.13; compilare PCRE1 8.45 da sorgente
 - DNS: usare `NULL` per delegare a /etc/resolv.conf (systemd-resolved su 127.0.0.53)
 - Mai `ufw enable` senza prima `ufw allow 22/tcp`
 - Su 26.04, UFW backend e nftables (trasparente, stessi comandi)
 
 ---
-*Ultimo aggiornamento: 24 Maggio 2026 — Audit completato, guida 26.04 creata*
+*Ultimo aggiornamento: 26 Maggio 2026 — Allineamento a guida unificata e plugin v2.1*

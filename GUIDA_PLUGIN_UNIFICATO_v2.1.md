@@ -4,7 +4,7 @@
 
 **Versione 2.1 — 25 Maggio 2026 — Testato su VM 130 e VM 134 con 50 richieste concorrenti**
 
-Sostituisce `GUIDA_PLUGIN_UNIFICATO_v1.0.md` (stack 2-plugin) e `GUIDA_PLUGIN_UNIFICATO_v2.0.md` (hardcoded).
+Sostituisce `archive/storico/GUIDA_PLUGIN_UNIFICATO_v1.0.md` (stack 2-plugin) e `archive/storico/GUIDA_PLUGIN_UNIFICATO_v2.0.md` (hardcoded).
 
 ---
 
@@ -17,7 +17,7 @@ Sostituisce `GUIDA_PLUGIN_UNIFICATO_v1.0.md` (stack 2-plugin) e `GUIDA_PLUGIN_UN
 | Utenti hardcoded in C | **Da config file** (`USER nome password`) |
 | Admin IP già da config | Invariato |
 | Regex deny non supportato | **Supportato** (`DENY .*\.ru$`) |
-| Reason phrase 403 errata | **Corretto**: 403 = "Forbidden" |
+| Reason phrase 403 errata | **Da verificare sul binario corrente**: il codice deve restituire 403 = "Forbidden" |
 
 **Nessuna ricompilazione necessaria per cambiare regole o utenti.** Basta editare `ats_proxy_filter.conf` e restart.
 
@@ -43,9 +43,9 @@ WHITELIST ubuntu.com
 WHITELIST example.com
 
 # Utenti per autenticazione Basic Proxy
-USER admin proxy2026
-USER user1 pass123
-USER operator op3rat0r
+USER admin INSERIRE_PASSWORD_FORTE
+USER user1 INSERIRE_PASSWORD_FORTE
+USER operator INSERIRE_PASSWORD_FORTE
 ```
 
 ---
@@ -64,9 +64,11 @@ EOF
 
 ## 4. Deploy
 
+> Stato artefatti: binario e sorgente C sono versionati in `bin/ats_proxy_filter_v21.so` e `src/ats_proxy_filter_v21.c`. Il sorgente e stato ricostruito da comportamento documentato e va ricompilato con ATS 9.2.13 per validazione funzionale.
+
 ```bash
 # Copia il plugin
-sudo cp ats_proxy_filter.so /opt/trafficserver/lib/modules/
+sudo cp bin/ats_proxy_filter_v21.so /opt/trafficserver/lib/modules/ats_proxy_filter.so
 sudo chown ats:ats /opt/trafficserver/lib/modules/ats_proxy_filter.so
 
 # Crea config
@@ -74,7 +76,7 @@ sudo tee /etc/trafficserver/ats_proxy_filter.conf > /dev/null << 'EOF'
 ADMIN 192.168.89.10
 DENY httpbin.org
 WHITELIST google.com
-USER admin proxy2026
+USER admin INSERIRE_PASSWORD_FORTE
 EOF
 
 # Attiva
@@ -101,7 +103,7 @@ curl -s -o /dev/null -w '%{http_code}\n' -x http://proxy:8080 http://google.com 
 curl -s -o /dev/null -w '%{http_code}\n' -x http://proxy:8080 http://reddit.com         # → 407
 
 # AUTH valida
-curl -s -o /dev/null -w '%{http_code}\n' -x http://proxy:8080 --proxy-user admin:proxy2026 http://reddit.com  # → 301
+curl -s -o /dev/null -w '%{http_code}\n' -x http://proxy:8080 --proxy-user admin:INSERIRE_PASSWORD http://reddit.com  # → 301
 
 # AUTH errata
 curl -s -o /dev/null -w '%{http_code}\n' -x http://proxy:8080 --proxy-user wrong:wrong http://reddit.com     # → 407
@@ -114,14 +116,17 @@ curl -s -o /dev/null -w '%{http_code}\n' -x http://proxy:8080 http://httpbin.org
 
 ## 6. Compilazione del plugin
 
+Il sorgente v2.1 e disponibile nel repository. Compilare dentro l'albero sorgente ATS:
+
 ```bash
 cd /tmp/trafficserver-9.2.13
-gcc -fPIC -shared -I. -I./include -o ats_proxy_filter.so ats_proxy_filter_v21.c
+gcc -fPIC -shared -I. -I./include -o ats_proxy_filter.so src/ats_proxy_filter_v21.c
 ```
 
-Il sorgente è `ats_proxy_filter_v21.c` — ~250 righe di C.  
 Hook: `TS_HTTP_OS_DNS_HOOK`.  
 Thread-safe: zero malloc nel path caldo.
+
+Nota: se il binario in uso risponde a 403 con reason phrase `Proxy Auth Required`, correggere il sorgente impostando reason phrase `Forbidden`, ricompilare e sostituire `/opt/trafficserver/lib/modules/ats_proxy_filter.so`.
 
 ---
 

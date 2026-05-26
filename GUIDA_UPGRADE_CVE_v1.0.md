@@ -32,6 +32,7 @@ Questa guida copre:
 | **LZMA** | 5.4.x | **5.8.3** | Compressione alternativa | NVD |
 | **Brotli** | 1.1.x | **1.2.0** | Compressione | [github.com/google/brotli](https://github.com/google/brotli) |
 | **libcurl** | 8.x | **8.18.0** | HTTP client interno | [curl.se](https://curl.se/) |
+| **libxml2** | 2.x | 2.x | Parsing XML/config legacy e dipendenza build | [gitlab.gnome.org/GNOME/libxml2](https://gitlab.gnome.org/GNOME/libxml2) |
 | **libjson-c** | 0.17 | **0.18** | Parsing JSON | [github.com/json-c](https://github.com/json-c) |
 | **yaml-cpp** | interno ATS | interno ATS | Parsing YAML ACL/log | [github.com/jbeder/yaml-cpp](https://github.com/jbeder/yaml-cpp) |
 | **Kernel** | 6.8.x | **7.0.0** | Sistema | [ubuntu.com/security](https://ubuntu.com/security) |
@@ -118,7 +119,7 @@ sudo tail -30 /var/log/ats-cve.log
 |-----|--------|-------|---------|-----|-------------|-------|
 | 9.2.13 | 24.04 Noble | 8.39 (apt) | 3.0.x | 13.x | autotools | ✅ Testato VM 130 |
 | 9.2.13 | 26.04 Resolute | 8.45 (sorgente) | 3.5.5 | 15.2.0 | autotools | ✅ Testato VM 134 |
-| 10.1.2 | 26.04 | 8.45 | 3.5.5 | 15.2.0 | **CMake** | ⚠️ API check OK, build da completare |
+| 10.1.2 | 26.04 | 8.45 | 3.5.5 | 15.2.0 | **CMake** | ⚠️ NON validato: API check parziale, build e plugin test da completare |
 
 ### 4.2 Differenze ATS 9.x → 10.x (verificato 25/05/2026)
 
@@ -134,7 +135,9 @@ sudo tail -30 /var/log/ats-cve.log
 | Records format | records.config (key-value) | da verificare | Potrebbe essere YAML in 10.x |
 | Plugin API | Stabile | Stabile | **Plugin v2.1 dovrebbe funzionare** (da ricompilare contro headers 10.x) |
 
-### 4.3 Procedura upgrade a ATS 10.x (preliminare, da testare)
+### 4.3 Procedura upgrade a ATS 10.x (bozza non validata)
+
+Questa procedura e un promemoria tecnico, non un runbook operativo. Non usarla in produzione finche build ATS 10.x, ricompilazione plugin e batteria test non sono completate su VM reale.
 
 ```bash
 # 1. Backup
@@ -156,6 +159,7 @@ sudo make install
 
 # 3. Ricompilare plugin v2.1 contro nuove headers
 cd /tmp/trafficserver-10.1.2
+cp /opt/ats-proxy-enterprise/src/ats_proxy_filter_v21.c .
 gcc -fPIC -shared -I. -I./include -o /tmp/ats_proxy_filter_v21.so \
   ats_proxy_filter_v21.c
 
@@ -166,12 +170,14 @@ sudo systemctl start trafficserver
 ```
 
 ⚠️ **ATTENZIONE**: La procedura di upgrade a 10.x NON è stata testata su VM reale.
-- API verificate compatibili
-- Build system cambiato (CMake)
-- Config format potrebbe essere cambiato (records.config → YAML?)
-- Plugin richiede ricompilazione
+- API verificate compatibili.
+- Build system cambiato (CMake).
+- Config format potrebbe essere cambiato (records.config → YAML?).
+- Plugin da ricompilare con sorgente `src/ats_proxy_filter_v21.c` (versionato in repo).
 
-**Raccomandazione**: Attendere un test completo prima di eseguire in produzione.
+**Stato sorgente**: il file `src/ats_proxy_filter_v21.c` e stato ricostruito e versionato il 2026-05-25. Va compilato e validato su ATS 9.2.13 e poi ATS 10.x.
+
+**Raccomandazione**: trattare ATS 10.x come attivita separata di laboratorio. L'unica baseline validata per produzione resta ATS 9.2.13.
 
 ---
 

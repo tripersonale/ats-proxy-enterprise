@@ -145,8 +145,9 @@ I riferimenti normativi considerati:
 - **Backup configurazioni**: Procedura manuale documentata.
 
 **Da implementare**:
-- [ ] Health check automatico + alerting (gap RES-01)
-- [ ] Test di carico >100 req/s (gap RES-02)
+- [x] Health check automatico base (gap RES-01 parzialmente chiuso)
+- [ ] Alerting esterno su health check
+- [ ] Test di carico >100 req/s e benchmark latenza (gap RES-02)
 - [ ] Backup automatico via cron (gap RES-05)
 - [ ] Disaster recovery runbook completo
 
@@ -201,7 +202,7 @@ I riferimenti normativi considerati:
 - **Config file**: `chmod 640`, leggibili solo da root e ats.
 
 **Da implementare**:
-- [ ] TLS frontend ATS (porta 8443) per cifrare traffico client→proxy (gap SEC-09)
+- [x] TLS frontend ATS opzionale documentato su porta 8443 (gap SEC-09 mitigato)
 - [ ] Cifratura backup configurazioni se contengono segreti
 
 **Mappatura normativa**:

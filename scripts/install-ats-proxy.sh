@@ -12,7 +12,8 @@ VERSION="1.0"
 ATS_VERSION="9.2.13"
 ATS_URL="https://downloads.apache.org/trafficserver/trafficserver-${ATS_VERSION}.tar.bz2"
 ATS_SHA_URL="${ATS_URL}.sha256"
-PLUGIN_URL=""  # URL to precompiled ats_proxy_filter_v21.so, or bundled as base64 in PLUGIN_B64
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Defaults
 HOSTNAME="ats-proxy-01"
@@ -23,11 +24,32 @@ ALLOWED_SUBNET="192.168.89.0/24"
 ADMIN_IPS="192.168.89.10"
 DENY_DOMAINS="httpbin.org,bad.com,malware.net"
 WHITELIST_DOMAINS="google.com,github.com,ubuntu.com,example.com"
-AUTH_USERS="admin:proxy2026,user1:pass123"
+AUTH_USERS=""
 STATIC_ROUTES=""
 PROXY_PORT="8080"
 TLS_ENABLED="n"
+APPLY_NETPLAN="n"
 CONFIG_FILE=""
+ENV_FILE=""
+PLUGIN_PATH=""
+CLI_PLUGIN_PATH=""
+NON_INTERACTIVE=false
+VALIDATE_ONLY=false
+
+usage() {
+  cat << 'EOF'
+Usage:
+  sudo bash scripts/install-ats-proxy.sh [options]
+
+Options:
+  --env FILE            Load ATS_* environment config file
+  --config FILE         Load legacy config file
+  --plugin FILE         Plugin binary path; overrides ATS_PLUGIN_PATH
+  --non-interactive     Do not prompt; fail if required values are missing
+  --validate-only       Validate OS, config and plugin path without installing
+  -h, --help            Show help
+EOF
+}
 
 # Colors
 RED='\033[0;31m'
@@ -44,8 +66,12 @@ err()  { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
 # ============================================================================
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --env) ENV_FILE="$2"; shift 2 ;;
     --config) CONFIG_FILE="$2"; shift 2 ;;
     --non-interactive) NON_INTERACTIVE=true; shift ;;
+    --plugin) PLUGIN_PATH="$2"; CLI_PLUGIN_PATH="$2"; shift 2 ;;
+    --validate-only) VALIDATE_ONLY=true; shift ;;
+    -h|--help) usage; exit 0 ;;
     *) err "Unknown option: $1" ;;
   esac
 done
@@ -74,10 +100,48 @@ detect_os() {
 # ============================================================================
 # Load config file or ask interactive
 # ============================================================================
+load_file() {
+  local file="$1"
+  if [ ! -f "$file" ]; then
+    err "Config file not found: $file"
+  fi
+  log "Loading config: $file"
+  # shellcheck source=/dev/null
+  source "$file"
+}
+
+apply_env_aliases() {
+  HOSTNAME="${ATS_HOSTNAME:-$HOSTNAME}"
+  IP="${ATS_IP_CIDR:-$IP}"
+  GATEWAY="${ATS_GATEWAY:-$GATEWAY}"
+  DNS="${ATS_DNS:-$DNS}"
+  ALLOWED_SUBNET="${ATS_ALLOWED_SUBNET:-$ALLOWED_SUBNET}"
+  ADMIN_IPS="${ATS_ADMIN_IPS:-$ADMIN_IPS}"
+  DENY_DOMAINS="${ATS_DENY_DOMAINS:-$DENY_DOMAINS}"
+  WHITELIST_DOMAINS="${ATS_WHITELIST_DOMAINS:-$WHITELIST_DOMAINS}"
+  AUTH_USERS="${ATS_AUTH_USERS:-$AUTH_USERS}"
+  STATIC_ROUTES="${ATS_STATIC_ROUTES:-$STATIC_ROUTES}"
+  PROXY_PORT="${ATS_PROXY_PORT:-$PROXY_PORT}"
+  APPLY_NETPLAN="${ATS_APPLY_NETPLAN:-$APPLY_NETPLAN}"
+  TLS_ENABLED="${ATS_TLS_ENABLED:-$TLS_ENABLED}"
+  PLUGIN_PATH="${ATS_PLUGIN_PATH:-$PLUGIN_PATH}"
+  PLUGIN_PATH="${CLI_PLUGIN_PATH:-$PLUGIN_PATH}"
+}
+
 load_config() {
-  if [ -n "$CONFIG_FILE" ] && [ -f "$CONFIG_FILE" ]; then
-    log "Loading config: $CONFIG_FILE"
-    source "$CONFIG_FILE"
+  if [ -n "$ENV_FILE" ]; then
+    load_file "$ENV_FILE"
+  elif [ -f "$REPO_ROOT/ats-proxy.env" ]; then
+    load_file "$REPO_ROOT/ats-proxy.env"
+  fi
+
+  if [ -n "$CONFIG_FILE" ]; then
+    load_file "$CONFIG_FILE"
+  fi
+
+  apply_env_aliases
+
+  if [ -n "$ENV_FILE" ] || [ -n "$CONFIG_FILE" ] || [ -f "$REPO_ROOT/ats-proxy.env" ] || [ "$NON_INTERACTIVE" = true ]; then
     return
   fi
 
@@ -91,11 +155,50 @@ load_config() {
   read -p "Admin IPs (comma-separated) [$ADMIN_IPS]: " input; ADMIN_IPS="${input:-$ADMIN_IPS}"
   read -p "Denied domains (comma-separated) [$DENY_DOMAINS]: " input; DENY_DOMAINS="${input:-$DENY_DOMAINS}"
   read -p "Whitelist domains (comma-separated) [$WHITELIST_DOMAINS]: " input; WHITELIST_DOMAINS="${input:-$WHITELIST_DOMAINS}"
-  read -p "Auth users (user:pass, comma-separated) [$AUTH_USERS]: " input; AUTH_USERS="${input:-$AUTH_USERS}"
-  read -p "Static routes (net/gw, comma-separated) [none]: " input; STATIC_ROUTES="${input:-$STATIC_ROUTES}"
+  read -p "Auth users (user:pass, comma-separated; no default): " input; AUTH_USERS="${input:-$AUTH_USERS}"
+  read -p "Static routes (net:gw, comma-separated) [none]: " input; STATIC_ROUTES="${input:-$STATIC_ROUTES}"
   read -p "Proxy port [$PROXY_PORT]: " input; PROXY_PORT="${input:-$PROXY_PORT}"
+  read -p "Apply static netplan config? [n]: " input; APPLY_NETPLAN="${input:-$APPLY_NETPLAN}"
   read -p "Enable TLS on port 8443? [n]: " input; TLS_ENABLED="${input:-$TLS_ENABLED}"
+  read -p "Plugin path [./ats_proxy_filter_v21.so]: " input; PLUGIN_PATH="${input:-$PLUGIN_PATH}"
   echo ""
+}
+
+validate_config() {
+  local missing=0
+  for name in HOSTNAME IP GATEWAY DNS ALLOWED_SUBNET ADMIN_IPS DENY_DOMAINS WHITELIST_DOMAINS AUTH_USERS PROXY_PORT APPLY_NETPLAN TLS_ENABLED; do
+    if [ -z "${!name:-}" ]; then
+      warn "Missing required value: $name"
+      missing=1
+    fi
+  done
+
+  if [[ "$AUTH_USERS" == *CHANGE_ME* ]]; then
+    warn "AUTH_USERS contains CHANGE_ME placeholders"
+    missing=1
+  fi
+
+  if [[ "$IP" != */* ]]; then
+    warn "IP must be CIDR notation, example: 192.168.89.100/24"
+    missing=1
+  fi
+
+  if [ -z "$PLUGIN_PATH" ]; then
+    if [ -f "$REPO_ROOT/ats_proxy_filter_v21.so" ]; then
+      PLUGIN_PATH="$REPO_ROOT/ats_proxy_filter_v21.so"
+    elif [ -f "$REPO_ROOT/bin/ats_proxy_filter_v21.so" ]; then
+      PLUGIN_PATH="$REPO_ROOT/bin/ats_proxy_filter_v21.so"
+    fi
+  fi
+
+  if [ -z "$PLUGIN_PATH" ] || [ ! -f "$PLUGIN_PATH" ]; then
+    warn "Plugin binary not found. Set ATS_PLUGIN_PATH or pass --plugin /path/to/ats_proxy_filter_v21.so"
+    missing=1
+  fi
+
+  if [ "$missing" -ne 0 ]; then
+    err "Configuration validation failed. Fix values before installing. No system changes were made by installer steps."
+  fi
 }
 
 # ============================================================================
@@ -123,6 +226,11 @@ prepare_system() {
 # Network configuration
 # ============================================================================
 configure_network() {
+  if [ "$APPLY_NETPLAN" != "y" ] && [ "$APPLY_NETPLAN" != "Y" ] && [ "$APPLY_NETPLAN" != "s" ] && [ "$APPLY_NETPLAN" != "S" ]; then
+    log "Netplan static configuration skipped"
+    return
+  fi
+
   local ip_addr="${IP%/*}"
   local cidr="${IP#*/}"
 
@@ -149,9 +257,13 @@ EOF
     log "Adding static routes..."
     IFS=',' read -ra ROUTES <<< "$STATIC_ROUTES"
     for route in "${ROUTES[@]}"; do
+      if [[ "$route" != *:* ]]; then
+        warn "Skipping invalid static route '$route' (expected net:gw)"
+        continue
+      fi
       local net="${route%:*}"
       local gw="${route#*:}"
-      sudo sed -i "/- to: default/a\\        - to: ${net}\\n          via: ${gw}" "$CONFIG_FILE"
+      sudo perl -0pi -e "s/(        - to: default\n          via: ${GATEWAY}\n)/\$1        - to: ${net}\n          via: ${gw}\n/" "$CONFIG_FILE"
     done
   fi
 
@@ -301,38 +413,42 @@ EOF
 configure_plugin() {
   log "Writing plugin config..."
 
+  local tmp_conf
+  tmp_conf=$(mktemp)
+
   # Build ADMIN lines
-  local admin_lines=""
   IFS=',' read -ra ADMINS <<< "$ADMIN_IPS"
   for ip in "${ADMINS[@]}"; do
-    admin_lines="${admin_lines}ADMIN ${ip}\n"
+    [ -n "$ip" ] && printf 'ADMIN %s\n' "$ip" >> "$tmp_conf"
   done
 
   # Build DENY lines
-  local deny_lines=""
   IFS=',' read -ra DENIES <<< "$DENY_DOMAINS"
   for d in "${DENIES[@]}"; do
-    deny_lines="${deny_lines}DENY ${d}\n"
+    [ -n "$d" ] && printf 'DENY %s\n' "$d" >> "$tmp_conf"
   done
 
   # Build WHITELIST lines
-  local white_lines=""
   IFS=',' read -ra WHITES <<< "$WHITELIST_DOMAINS"
   for w in "${WHITES[@]}"; do
-    white_lines="${white_lines}WHITELIST ${w}\n"
+    [ -n "$w" ] && printf 'WHITELIST %s\n' "$w" >> "$tmp_conf"
   done
 
   # Build USER lines
-  local user_lines=""
   IFS=',' read -ra USERS_LIST <<< "$AUTH_USERS"
   for entry in "${USERS_LIST[@]}"; do
+    [ -n "$entry" ] || continue
+    if [[ "$entry" != *:* ]]; then
+      warn "Skipping invalid auth user '$entry' (expected user:password)"
+      continue
+    fi
     local u="${entry%:*}"
     local p="${entry#*:}"
-    user_lines="${user_lines}USER ${u} ${p}\n"
+    printf 'USER %s %s\n' "$u" "$p" >> "$tmp_conf"
   done
 
-  sudo bash -c "cat > /etc/trafficserver/ats_proxy_filter.conf << EOF
-${admin_lines}${deny_lines}${white_lines}${user_lines}EOF"
+  sudo install -o ats -g ats -m 640 "$tmp_conf" /etc/trafficserver/ats_proxy_filter.conf
+  rm -f "$tmp_conf"
 
   sudo tee /etc/trafficserver/plugin.config > /dev/null << EOF
 ats_proxy_filter.so
@@ -348,24 +464,8 @@ EOF
 deploy_plugin() {
   log "Deploying plugin..."
 
-  # Look for plugin in current dir or download
-  if [ -f "./ats_proxy_filter_v21.so" ]; then
-    sudo cp ./ats_proxy_filter_v21.so /opt/trafficserver/lib/modules/ats_proxy_filter.so
-  elif [ -f "/tmp/ats_proxy_filter_v21.so" ]; then
-    sudo cp /tmp/ats_proxy_filter_v21.so /opt/trafficserver/lib/modules/ats_proxy_filter.so
-  else
-    warn "Plugin .so not found locally. Downloading..."
-    # Fallback: compile from source if source is available
-    if [ -f "/tmp/ats_proxy_filter_v21.c" ]; then
-      cd "/tmp/trafficserver-${ATS_VERSION}"
-      gcc -fPIC -shared -I. -I./include -o /tmp/ats_proxy_filter_v21.so /tmp/ats_proxy_filter_v21.c
-      sudo cp /tmp/ats_proxy_filter_v21.so /opt/trafficserver/lib/modules/ats_proxy_filter.so
-    else
-      err "Plugin .so not found. Place ats_proxy_filter_v21.so in current directory or /tmp/"
-    fi
-  fi
+  sudo install -o ats -g ats -m 755 "$PLUGIN_PATH" /opt/trafficserver/lib/modules/ats_proxy_filter.so
 
-  sudo chown ats:ats /opt/trafficserver/lib/modules/ats_proxy_filter.so
   log "Plugin deployed"
 }
 
@@ -477,6 +577,26 @@ FEOF
   sudo etckeeper init 2>/dev/null || true
   sudo etckeeper commit "Initial ATS proxy deployment" 2>/dev/null || true
 
+  # sysctl network hardening
+  sudo tee /etc/sysctl.d/99-ats-hardening.conf > /dev/null << 'EOF'
+net.ipv4.ip_forward=0
+net.ipv4.conf.all.send_redirects=0
+net.ipv4.conf.default.send_redirects=0
+net.ipv4.conf.all.accept_redirects=0
+net.ipv4.conf.default.accept_redirects=0
+net.ipv4.conf.all.log_martians=1
+net.ipv4.tcp_syncookies=1
+net.ipv4.tcp_rfc1337=1
+kernel.sysrq=0
+kernel.core_pattern=|/bin/false
+EOF
+  sudo sysctl -p /etc/sysctl.d/99-ats-hardening.conf >/dev/null 2>&1 || true
+
+  # CVE monitor helper
+  if [ -f "./scripts/cve-check.sh" ]; then
+    sudo install -o root -g root -m 750 ./scripts/cve-check.sh /opt/cve-check.sh
+  fi
+
   log "Hardening applied"
 }
 
@@ -497,7 +617,8 @@ fi
 HEOF
   sudo chmod +x /opt/ats_health.sh
   sudo touch /var/log/ats-health.log
-  sudo chmod 666 /var/log/ats-health.log
+  sudo chown root:adm /var/log/ats-health.log 2>/dev/null || sudo chown root:root /var/log/ats-health.log
+  sudo chmod 640 /var/log/ats-health.log
   (sudo crontab -l 2>/dev/null; echo '* * * * * /opt/ats_health.sh') | sudo crontab - 2>/dev/null || true
   log "Health check configured (every 60s)"
 }
@@ -538,19 +659,21 @@ verify() {
 
   local ok=0 fail=0
   test_case() {
-    local desc="$1" expected="$2"
-    local code=$(curl -s -o /dev/null -w '%{http_code}' --connect-timeout 5 -x "http://127.0.0.1:${PROXY_PORT}" http://httpbin.org/ip 2>/dev/null || echo "000")
+    local desc="$1" expected="$2" url="$3" extra_args="${4:-}"
+    local code
+    code=$(curl -s -o /dev/null -w '%{http_code}' --connect-timeout 5 -x "http://127.0.0.1:${PROXY_PORT}" ${extra_args} "$url" 2>/dev/null || echo "000")
     if [ "$code" = "$expected" ]; then
-      log "  ✅ $desc ($code)"
-      ((ok++))
+      log "  OK $desc ($code)"
+      ok=$((ok + 1))
     else
-      warn "  ❌ $desc (got $code, expected $expected)"
-      ((fail++))
+      warn "  FAIL $desc (got $code, expected $expected)"
+      fail=$((fail + 1))
     fi
   }
 
-  test_case "Proxy responding" "403"
-  test_case "Whitelist pass" "301"
+  test_case "DENY rule" "403" "http://httpbin.org/ip"
+  test_case "Whitelist pass" "301" "http://google.com"
+  test_case "Auth required" "407" "http://wikipedia.org"
   log "Verification complete: $ok passed, $fail failed"
 }
 
@@ -565,6 +688,12 @@ main() {
 
   detect_os
   load_config
+  validate_config
+
+  if [ "$VALIDATE_ONLY" = true ]; then
+    log "Validation complete. No installation performed."
+    exit 0
+  fi
 
   log "Starting installation on ${OS_CODENAME}..."
   log "Host: ${HOSTNAME} | IP: ${IP} | Port: ${PROXY_PORT}"

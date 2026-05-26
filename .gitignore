@@ -1,0 +1,24 @@
+# Local deployment configuration
+.env
+*.env
+!env/*.env.example
+ats-proxy.conf
+*.local
+
+# Secrets and keys
+secrets/
+*.key
+*.pem
+*.csr
+*.crt
+
+# Local plugin/build artifacts
+dist/
+ats_proxy_filter*.so
+!bin/ats_proxy_filter_v21.so
+trafficserver-*/
+*.tar.bz2
+
+# Logs and temporary files
+*.log
+tmp/
