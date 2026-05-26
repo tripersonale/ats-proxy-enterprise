@@ -13,6 +13,16 @@
 - Allineamento al MANIFESTO_ICT.md v1.0 (6 domande di verifica)
 - Allineamento ai Principi Operativi ICT (documentazione profonda, codice responsabilità, automazione governabile)
 - Stile ereditato da `archive/storico/GUIDA_*_v1.0.md` (blocchi OS color-coded, tabelle troubleshooting, checklist, comandi con output atteso, mappatura normativa integrata)
+- DNS cache gap non riprodotto nei test v0.13.0 su VM135/VM136 (richieste auth-gated restano `407`, whitelist genera log ripetuti)
+- Admin bypass da IP remoto `192.168.89.55` confermato su VM135
+
+### Known Limitations
+- ATS 10.x remains not validated (requires C++17, generated build headers, CMake build system)
+- TLS frontend on port 8443 implemented in installer but not in end-to-end test battery
+- Load beyond 50 concurrent requests not validated
+- Formal vulnerability assessment procedure not yet defined
+- Annual penetration test not yet performed
+- FEL-1.0/CLA legal review pending
 
 ## 0.13.0 - 2026-05-26
 

@@ -514,7 +514,7 @@ Esempio output atteso:
 [OK] CVE helper installed
 
 ============================================
-Passed: 22  Failed: 0  Warnings: 0
+Passed: 25  Failed: 0  Warnings: 0
 ============================================
 ```
 
@@ -524,7 +524,7 @@ Passed: 22  Failed: 0  Warnings: 0
 |-------|--------|
 | UFW active → FAIL | `sudo ufw enable` |
 | fail2ban service → FAIL | `sudo systemctl enable --now fail2ban` |
-| fail2ban ats-proxy jail → FAIL | Verificare `/etc/fail2ban/jail.local` e filtro |
+| fail2ban ats-proxy jail → FAIL | Verificare `/etc/fail2ban/jail.d/ats-proxy.local` e filtro |
 | unattended-upgrades → FAIL | `sudo apt install unattended-upgrades && sudo systemctl enable --now unattended-upgrades` |
 | etckeeper → FAIL | `sudo apt install etckeeper && sudo etckeeper init` |
 | permessi file 640 → FAIL | `sudo chmod 640 /etc/trafficserver/*.config /etc/trafficserver/*.yaml /etc/trafficserver/*.conf` |

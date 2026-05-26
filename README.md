@@ -3,7 +3,7 @@
 > Forward Proxy HTTP/HTTPS con URL Filtering, Autenticazione Basic e Hardening Enterprise
 > Allineato al MANIFESTO_ICT.md v1.0 e ai principi CULLA v2.0.2
 
-**Versione 0.13.0** · ATS 9.2.13 LTS · Ubuntu 24.04 / 26.04 · Compliance GDPR / NIS2 / D.Lgs 196 / PSNC / ISO 27001
+**Versione 0.14.0** · ATS 9.2.13 LTS · Ubuntu 24.04 / 26.04 · Compliance GDPR / NIS2 / D.Lgs 196 / PSNC / ISO 27001
 
 [![License: FEL-1.0](https://img.shields.io/badge/license-FEL--1.0-blue)](LICENSE.md) [![Hardening: 25/25](https://img.shields.io/badge/hardening-25%2F25-brightgreen)](TEST_MATRIX.md) [![Regression: 9/9](https://img.shields.io/badge/regression-9%2F9-brightgreen)](TEST_MATRIX.md)
 
@@ -447,6 +447,8 @@ Hardening coperto: systemd sandbox, UFW, fail2ban `sshd` e `ats-proxy`, unattend
 | [`CHANGELOG.md`](CHANGELOG.md) | Cronologia release |
 | [`STATE_CARD.md`](STATE_CARD.md) | Stato operativo sintetico |
 | [`ROOT_CAUSE_REPLICABILITA_v1.0.md`](ROOT_CAUSE_REPLICABILITA_v1.0.md) | Root cause del precedente problema di replicabilita |
+| [`IMPROVEMENTS.md`](IMPROVEMENTS.md) | Log miglioramenti, problemi noti, soluzioni proposte |
+| [`CLA.md`](CLA.md) | Contributor License Agreement (revisione legale pendente) |
 
 Le guide storiche sono in `archive/storico/`. Non sono il percorso operativo da seguire.
 
@@ -464,7 +466,7 @@ sudo bash scripts/ats-hardening-check.sh 8080
 
 ## Limiti Noti
 
-- Il plugin usa `TS_HTTP_OS_DNS_HOOK`: la cache DNS di ATS puo evitare hook successivi per domini gia risolti. Il comportamento e noto, documentato in `TEST_MATRIX.md`, e non ha mostrato differenze tra plugin corrente e vecchio binario recuperato. Da considerare nella policy di change/restart.
+- Il plugin usa `TS_HTTP_OS_DNS_HOOK`. In teoria la cache DNS potrebbe saltare hook successivi su domini già risolti, ma i test rapidi su VM135/VM136 (v0.13.0) non hanno riprodotto il problema: richieste auth-gated restano `407`, whitelist genera log ripetuti. Comportamento identico tra plugin corrente e binario recuperato.
 - ATS 10.x non e validato: fallisce build drop-in con `gcc` (richiede C++17) e con `g++ -std=c++17` (richiede header generati dal build system). Non aggiornare produzione ad ATS 10.x finche `GUIDA_OPERATIVA.md` §10 non riporta test reali.
 - TLS frontend su porta 8443 e implementato nell'installer (`ATS_TLS_ENABLED=y`) ma non incluso nella batteria end-to-end del 2026-05-26.
 - Carico oltre 50 richieste concorrenti non validato in questa sessione.

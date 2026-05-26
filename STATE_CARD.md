@@ -53,3 +53,5 @@ sudo bash scripts/ats-hardening-check.sh 8080
 - TLS frontend opzionale non incluso nella batteria e2e.
 - Carico oltre 50 richieste concorrenti non validato in questa sessione.
 - Revisione legale FEL-1.0/CLA pendente.
+- Procedura formale di vulnerability assessment non ancora definita.
+- Penetration test annuale non ancora eseguito.
