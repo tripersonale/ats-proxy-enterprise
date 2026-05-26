@@ -32,7 +32,7 @@
 | **Minimizzazione** | Solo FQDN loggato (non URL completo), HTTPS non ispezionato | `DPIA §2` |
 | **Resilienza** | Health check automatico, auto-restart, systemd hardening | `GUIDA_COMPLETA §9` |
 | **Audit trail** | etckeeper (versionamento configurazioni), audit.log (ogni richiesta) | `GUIDA_COMPLETA §8.4` |
-| **Gestione vulnerabilità** | unattended-upgrades per OS, procedura upgrade ATS documentata, script CVE check | `GUIDA_AGGIORNAMENTO_TESTATA.md` |
+| **Gestione vulnerabilità** | unattended-upgrades per OS, procedura upgrade ATS documentata, script CVE check | `GUIDA_OPERATIVA.md` |
 | **Backup** | Backup configurazioni (tar + etckeeper), procedura ripristino documentata | `GUIDA_OPERATIVA §6` |
 | **Cancellazione dati** | Procedura per diritto all'oblio (Art. 17 GDPR) documentata | `GUIDA_OPERATIVA §11` |
 | **Incident response** | Procedura documentata con template notifica NIS2 24h/72h | `GUIDA_OPERATIVA §12` |

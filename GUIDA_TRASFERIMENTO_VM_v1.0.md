@@ -86,4 +86,4 @@ Passed: 25  Failed: 0  Warnings: 0
 
 - Usare `ATS_APPLY_NETPLAN=n` salvo accesso console fuori banda.
 - Il plugin deve restare in `bin/ats_proxy_filter_v21.so` nel pacchetto.
-- Per deploy da repo diretta usare `GUIDA_INSTALLAZIONE_TESTATA.md`.
+- Per deploy da repo diretta usare `GUIDA_INSTALLAZIONE.md`.

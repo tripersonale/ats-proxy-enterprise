@@ -47,6 +47,30 @@ preparazione sistema, compilazione ATS + PCRE1, configurazione, plugin, systemd,
 | `--validate-only` | Valida OS, configurazione e plugin senza installare nulla |
 | `-h`, `--help` | Mostra help |
 
+**Variabili principali in `ats-proxy.env`:**
+
+| Variabile | Scopo | Stato test |
+|-----------|-------|------------|
+| `ATS_HOSTNAME` | Hostname del proxy | Testato |
+| `ATS_IP_CIDR` | IP/CIDR della VM se `ATS_APPLY_NETPLAN=y` | Testato con netplan disattivo |
+| `ATS_ALLOWED_SUBNET` | Subnet autorizzata su UFW e `ip_allow.yaml` | Testato |
+| `ATS_ADMIN_IPS` | IP con bypass amministrativo nel plugin | Testato VM135 |
+| `ATS_DENY_DOMAINS` | Domini bloccati dal plugin | Testato |
+| `ATS_WHITELIST_DOMAINS` | Domini consentiti senza auth | Testato |
+| `ATS_AUTH_USERS` | Utenti Basic Auth (`user:password`) | Testato |
+| `ATS_PLUGIN_PATH` | Path al binario versionato `bin/ats_proxy_filter_v21.so` | Testato |
+| `ATS_TLS_ENABLED` | Abilita frontend TLS su porta 8443 | Implementato, **non incluso** nella batteria e2e 2026-05-26 |
+
+**Wrapper legacy supportati ma non necessari:**
+
+```bash
+# Verificano l'OS e poi delegano all'installer unico.
+sudo bash scripts/install-24.04.sh --env ats-proxy.env --non-interactive
+sudo bash scripts/install-26.04.sh --env ats-proxy.env --non-interactive
+```
+
+Il percorso supportato resta `scripts/install-ats-proxy.sh`: i wrapper esistono per impedire l'uso accidentale su OS errato.
+
 **Procedura:**
 
 ```bash

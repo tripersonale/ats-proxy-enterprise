@@ -1,4 +1,10 @@
 #!/bin/bash
+# Cosa: stampa un report diagnostico rapido su OS, ATS, servizio, plugin, config e porte.
+# Uso: sudo bash scripts/ats-version-report.sh
+# Perché: avere una fotografia ripetibile dello stato runtime prima/dopo upgrade o incidenti.
+# Dipendenze: bash, lsb_release, systemctl, sha256sum, ss, grep, tail.
+# Rischi: read-only; non stampa password o valori USER dal file plugin.
+# Rollback/cleanup: nessuna modifica al filesystem.
 set -euo pipefail
 
 echo "============================================"
@@ -25,9 +31,9 @@ systemctl is-active trafficserver 2>/dev/null || echo "inactive"
 
 echo ""
 echo "--- Plugin ---"
-if [ -f /opt/trafficserver/lib/modules/ats_proxy_filter.so ]; then
-  echo "plugin present: /opt/trafficserver/lib/modules/ats_proxy_filter.so"
-  sha256sum /opt/trafficserver/lib/modules/ats_proxy_filter.so 2>/dev/null || true
+if [ -f /opt/trafficserver/libexec/trafficserver/ats_proxy_filter.so ]; then
+  echo "plugin present: /opt/trafficserver/libexec/trafficserver/ats_proxy_filter.so"
+  sha256sum /opt/trafficserver/libexec/trafficserver/ats_proxy_filter.so 2>/dev/null || true
 else
   echo "plugin missing"
 fi

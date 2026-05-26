@@ -1398,7 +1398,12 @@ sudo tail -5 /var/lib/trafficserver/log/trafficserver/audit.log
 
 # Metriche in tempo reale?
 /opt/trafficserver/bin/traffic_top
+
+# Report diagnostico compatto pre/post upgrade
+sudo bash scripts/ats-version-report.sh
 ```
+
+`scripts/ats-version-report.sh` è read-only: stampa OS, versione ATS, stato servizio, hash plugin, config essenziale, porte e ultimi errori. Usarlo prima e dopo upgrade, incidenti o rollback.
 
 ---
 
