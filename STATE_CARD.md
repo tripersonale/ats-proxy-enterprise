@@ -4,7 +4,7 @@
 
 - Repository: `https://github.com/tripersonale/ats-proxy-enterprise.git`
 - Directory operativa: `/home/mvb/CULLA-instance/03_ICT/ats-proxy/`
-- Versione progetto: `0.12.0`
+- Versione progetto: `0.14.0`
 - Baseline supportata: ATS 9.2.13 su Ubuntu 24.04/26.04
 
 ## Stato Corrente
@@ -14,6 +14,7 @@
 - Regression post-install: 9/9 OK su entrambe.
 - Hardening post-install: 25/25 OK su entrambe.
 - Plugin sorgente e binario versionati con hash in `ARTIFACTS.md`.
+- Documentazione ricostruita v0.14.0: `GUIDA_INSTALLAZIONE.md`, `GUIDA_OPERATIVA.md`.
 - Guide storiche archiviate in `archive/storico/`.
 
 ## VM Lab
@@ -37,9 +38,9 @@ sudo bash scripts/ats-hardening-check.sh 8080
 
 ## File Chiave
 
-- `README.md`: manifesto e quick start.
-- `GUIDA_INSTALLAZIONE_TESTATA.md`: guida installazione corrente.
-- `GUIDA_AGGIORNAMENTO_TESTATA.md`: aggiornamento entro baseline, ATS 10.x non validato.
+- `README.md`: manifesto ICT e quick start.
+- `GUIDA_INSTALLAZIONE.md`: guida installazione completa (manuale + automatizzata, dual-OS).
+- `GUIDA_OPERATIVA.md`: guida operativa unificata (day-to-day, CVE, GDPR, incident response).
 - `scripts/install-ats-proxy.sh`: installer supportato.
 - `scripts/ats-regression-test.sh`: test funzionale.
 - `scripts/ats-hardening-check.sh`: test hardening.

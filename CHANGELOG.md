@@ -1,5 +1,19 @@
 # Changelog - ATS Proxy Enterprise
 
+## 0.14.0 - 2026-05-26
+
+### Changed
+- **Documentazione ricostruita** con stile archivio storico (guide da 80-107 righe → 503-1455 righe)
+- `README.md`: manifesto ICT con 10 principi, mappatura normativa GDPR/NIS2/ISO 27001, quick start, risultati validati, badge
+- `GUIDA_INSTALLAZIONE.md`: guida completa con percorso manuale (comandi copia-incolla) + automatizzato (install-ats-proxy.sh), dual-OS 🔵/🟢, troubleshooting 14 voci, checklist pre-prod 23 voci
+- `GUIDA_OPERATIVA.md`: guida unificata day-to-day + CVE + GDPR + incident response + troubleshooting. Include: gestione ACL/utenti, monitoraggio, backup/restore, hardening audit, upgrade ATS, compatibilità 9.x→10.x, gestione CVE con cve-check.sh, severity matrix, rollback, regression test, debug, compliance GDPR (Art.15/17), incident response con template NIS2/GDPR, checklist mensile
+- Guide root-level obsolete archiviate in `archive/storico/v0.13.0/`
+
+### Verified
+- Allineamento al MANIFESTO_ICT.md v1.0 (6 domande di verifica)
+- Allineamento ai Principi Operativi ICT (documentazione profonda, codice responsabilità, automazione governabile)
+- Stile ereditato da `archive/storico/GUIDA_*_v1.0.md` (blocchi OS color-coded, tabelle troubleshooting, checklist, comandi con output atteso, mappatura normativa integrata)
+
 ## 0.13.0 - 2026-05-26
 
 ### Added
