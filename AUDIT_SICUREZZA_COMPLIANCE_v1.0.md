@@ -488,7 +488,7 @@
 | GAP-RES-05 | Backup manuale | `etckeeper` + `tar czf` documentati |
 | GAP-RES-02 | Nessun test di carico | Test 50 richieste concorrenti DENY e AUTH |
 | GAP-AUD-01 | Nessuna integrità dei log | `etckeeper` copre config; log shipping documentato (rsyslog/ELK) |
-| GAP-AUD-02 | Nessun remote syslog | Documentato in GUIDA_LOG_SIEM (rsyslog imfile + Filebeat) |
+| GAP-AUD-02 | Nessun remote syslog | Storico in `archive/storico/GUIDA_LOG_SIEM_v1.0.md`; guida corrente: `README.md` + `GUIDA_INSTALLAZIONE_TESTATA.md` |
 | GAP-LOG-01 | Nessun log shipping | Documentato percorso rsyslog + ELK |
 | GAP-AUD-04 | Log non JSON | Documentato approccio con Logstash grok |
 | GAP-DEB-03 | Nessun log protocollo | Documentato `tcpdump` in sezione debug |

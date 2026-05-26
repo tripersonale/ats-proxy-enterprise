@@ -11,7 +11,10 @@ set -euo pipefail
 VERSION="1.0"
 ATS_VERSION="9.2.13"
 ATS_URL="https://downloads.apache.org/trafficserver/trafficserver-${ATS_VERSION}.tar.bz2"
-ATS_SHA_URL="${ATS_URL}.sha256"
+ATS_SHA_URL="${ATS_URL}.sha512"
+ATS_SHA512="46c291bc08cf3a73d5d2dd70f006c654c8f91ff5f6d7b28fa539ef2f10147fe27d6fac714b4cec06b3930945db6717b8f4714f990a3b77c1699e11fc218e7766"
+ATS_TARBALL="/tmp/trafficserver-${ATS_VERSION}.tar.bz2"
+ATS_SHA_FILE="/tmp/trafficserver-${ATS_VERSION}.tar.bz2.sha512"
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
@@ -129,39 +132,96 @@ apply_env_aliases() {
 }
 
 load_config() {
+  local loaded_config=false
   if [ -n "$ENV_FILE" ]; then
     load_file "$ENV_FILE"
+    loaded_config=true
   elif [ -f "$REPO_ROOT/ats-proxy.env" ]; then
     load_file "$REPO_ROOT/ats-proxy.env"
+    loaded_config=true
   fi
 
   if [ -n "$CONFIG_FILE" ]; then
     load_file "$CONFIG_FILE"
+    loaded_config=true
   fi
 
   apply_env_aliases
 
-  if [ -n "$ENV_FILE" ] || [ -n "$CONFIG_FILE" ] || [ -f "$REPO_ROOT/ats-proxy.env" ] || [ "$NON_INTERACTIVE" = true ]; then
+  if [ "$NON_INTERACTIVE" = true ]; then
     return
   fi
 
-  log "No config file. Interactive mode."
+  if [ "$loaded_config" = true ]; then
+    log "Config loaded. Interactive fallback for missing or placeholder values."
+  else
+    log "No config file. Interactive mode."
+  fi
+
   echo ""
-  read -p "Hostname [$HOSTNAME]: " input; HOSTNAME="${input:-$HOSTNAME}"
-  read -p "IP/CIDR [$IP]: " input; IP="${input:-$IP}"
-  read -p "Gateway [$GATEWAY]: " input; GATEWAY="${input:-$GATEWAY}"
-  read -p "DNS [$DNS]: " input; DNS="${input:-$DNS}"
-  read -p "Authorized subnet [$ALLOWED_SUBNET]: " input; ALLOWED_SUBNET="${input:-$ALLOWED_SUBNET}"
-  read -p "Admin IPs (comma-separated) [$ADMIN_IPS]: " input; ADMIN_IPS="${input:-$ADMIN_IPS}"
-  read -p "Denied domains (comma-separated) [$DENY_DOMAINS]: " input; DENY_DOMAINS="${input:-$DENY_DOMAINS}"
-  read -p "Whitelist domains (comma-separated) [$WHITELIST_DOMAINS]: " input; WHITELIST_DOMAINS="${input:-$WHITELIST_DOMAINS}"
-  read -p "Auth users (user:pass, comma-separated; no default): " input; AUTH_USERS="${input:-$AUTH_USERS}"
-  read -p "Static routes (net:gw, comma-separated) [none]: " input; STATIC_ROUTES="${input:-$STATIC_ROUTES}"
-  read -p "Proxy port [$PROXY_PORT]: " input; PROXY_PORT="${input:-$PROXY_PORT}"
-  read -p "Apply static netplan config? [n]: " input; APPLY_NETPLAN="${input:-$APPLY_NETPLAN}"
-  read -p "Enable TLS on port 8443? [n]: " input; TLS_ENABLED="${input:-$TLS_ENABLED}"
-  read -p "Plugin path [./ats_proxy_filter_v21.so]: " input; PLUGIN_PATH="${input:-$PLUGIN_PATH}"
+  prompt_value "HOSTNAME" "Hostname" "$HOSTNAME"
+  prompt_value "IP" "IP/CIDR" "$IP"
+  prompt_value "GATEWAY" "Gateway" "$GATEWAY"
+  prompt_value "DNS" "DNS" "$DNS"
+  prompt_value "ALLOWED_SUBNET" "Authorized subnet" "$ALLOWED_SUBNET"
+  prompt_value "ADMIN_IPS" "Admin IPs (comma-separated)" "$ADMIN_IPS"
+  prompt_value "DENY_DOMAINS" "Denied domains (comma-separated)" "$DENY_DOMAINS"
+  prompt_value "WHITELIST_DOMAINS" "Whitelist domains (comma-separated)" "$WHITELIST_DOMAINS"
+  prompt_value "AUTH_USERS" "Auth users (user:pass, comma-separated)" "$AUTH_USERS"
+  prompt_value "STATIC_ROUTES" "Static routes (net:gw, comma-separated; optional)" "$STATIC_ROUTES" true
+  prompt_value "PROXY_PORT" "Proxy port" "$PROXY_PORT"
+  prompt_value "APPLY_NETPLAN" "Apply static netplan config?" "$APPLY_NETPLAN"
+  prompt_value "TLS_ENABLED" "Enable TLS on port 8443?" "$TLS_ENABLED"
+  prompt_value "PLUGIN_PATH" "Plugin path" "$PLUGIN_PATH" true
   echo ""
+}
+
+prompt_value() {
+  local var_name="$1" label="$2" current="$3" optional="${4:-false}" input
+  if [ "$optional" = true ] && [ -n "$current" ] && [[ "$current" != *CHANGE_ME* ]]; then
+    return
+  fi
+  if [ -n "$current" ] && [[ "$current" != *CHANGE_ME* ]]; then
+    read -r -p "$label [$current]: " input
+    printf -v "$var_name" '%s' "${input:-$current}"
+  else
+    while true; do
+      read -r -p "$label: " input
+      if [ -n "$input" ] || [ "$optional" = true ]; then
+        printf -v "$var_name" '%s' "$input"
+        break
+      fi
+      warn "$label is required"
+    done
+  fi
+}
+
+download_if_needed() {
+  local url="$1" dest="$2"
+  if [ -s "$dest" ]; then
+    log "Using cached $(basename "$dest")"
+    return
+  fi
+
+  rm -f "$dest" "$dest".*
+  if command -v curl >/dev/null 2>&1; then
+    curl -fL --connect-timeout 15 --retry 3 --retry-delay 5 -o "$dest" "$url"
+  else
+    wget --timeout=30 --tries=3 -O "$dest" "$url"
+  fi
+}
+
+verify_ats_tarball() {
+  download_if_needed "$ATS_SHA_URL" "$ATS_SHA_FILE" || printf '%s *trafficserver-%s.tar.bz2\n' "$ATS_SHA512" "$ATS_VERSION" > "$ATS_SHA_FILE"
+  if (cd /tmp && sha512sum -c "$(basename "$ATS_SHA_FILE")"); then
+    return
+  fi
+
+  warn "Cached ATS tarball failed SHA512 verification. Re-downloading once."
+  rm -f "$ATS_TARBALL" "$ATS_TARBALL".*
+  download_if_needed "$ATS_URL" "$ATS_TARBALL"
+  printf '%s *trafficserver-%s.tar.bz2\n' "$ATS_SHA512" "$ATS_VERSION" > "$ATS_SHA_FILE"
+  (cd /tmp && sha512sum -c "$(basename "$ATS_SHA_FILE")") || err "ATS tarball SHA512 verification failed"
 }
 
 validate_config() {
@@ -285,18 +345,20 @@ create_ats_user() {
 # ============================================================================
 compile_ats() {
   log "Downloading ATS ${ATS_VERSION}..."
+  download_if_needed "$ATS_URL" "$ATS_TARBALL"
+  verify_ats_tarball
+
   cd /tmp
-  wget -q "$ATS_URL"
-  wget -q "$ATS_SHA_URL"
-  sha256sum -c "trafficserver-${ATS_VERSION}.tar.bz2.sha256" || warn "SHA256 verification failed (continuing)"
-  tar -xjf "trafficserver-${ATS_VERSION}.tar.bz2"
+  rm -rf "trafficserver-${ATS_VERSION}"
+  tar -xjf "$ATS_TARBALL"
   cd "trafficserver-${ATS_VERSION}"
 
   # PCRE1 for 26.04
   if [ "$OS" = "2604" ]; then
     log "Compiling PCRE1 from source (required on 26.04)..."
     cd /tmp
-    wget -q https://sourceforge.net/projects/pcre/files/pcre/8.45/pcre-8.45.tar.gz
+    download_if_needed https://sourceforge.net/projects/pcre/files/pcre/8.45/pcre-8.45.tar.gz /tmp/pcre-8.45.tar.gz
+    rm -rf pcre-8.45
     tar xzf pcre-8.45.tar.gz && cd pcre-8.45
     ./configure --prefix=/usr/local/pcre --enable-utf8 --enable-unicode-properties -q
     make -j$(nproc) -s && sudo make install -s
@@ -549,8 +611,8 @@ EOF
 failregex = \[ats_proxy_filter\] AUTH FAIL .* from <HOST>
 ignoreregex =
 EOF
-  sudo tee -a /etc/fail2ban/jail.local > /dev/null << FEOF
-
+  sudo mkdir -p /etc/fail2ban/jail.d
+  sudo tee /etc/fail2ban/jail.d/ats-proxy.local > /dev/null << FEOF
 [sshd]
 enabled = true
 port = ssh
@@ -566,7 +628,8 @@ maxretry = 5
 findtime = 300
 bantime = 3600
 FEOF
-  sudo systemctl enable --now fail2ban 2>/dev/null || true
+  sudo systemctl enable fail2ban 2>/dev/null || true
+  sudo systemctl restart fail2ban 2>/dev/null || true
 
   # unattended-upgrades
   sudo apt install -y -qq unattended-upgrades 2>/dev/null || true
@@ -593,8 +656,8 @@ EOF
   sudo sysctl -p /etc/sysctl.d/99-ats-hardening.conf >/dev/null 2>&1 || true
 
   # CVE monitor helper
-  if [ -f "./scripts/cve-check.sh" ]; then
-    sudo install -o root -g root -m 750 ./scripts/cve-check.sh /opt/cve-check.sh
+  if [ -f "$REPO_ROOT/scripts/cve-check.sh" ]; then
+    sudo install -o root -g root -m 750 "$REPO_ROOT/scripts/cve-check.sh" /opt/cve-check.sh
   fi
 
   log "Hardening applied"

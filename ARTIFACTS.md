@@ -1,47 +1,32 @@
-# Artifact Manifest - ATS Proxy Enterprise
+# Artifact Manifest
 
-## Required Runtime Artifacts
+## Runtime Artifacts
 
-| Artifact | Path | Status | Source |
-|----------|------|--------|--------|
-| Plugin binary v2.1 | `bin/ats_proxy_filter_v21.so` | Versioned | Recovered read-only from VM130 and VM134 disks via Proxmox/libguestfs |
-| Plugin C source v2.1 | `src/ats_proxy_filter_v21.c` | Versioned | Compiled and tested 2026-05-26 on VM135 (ATS 9.2.13, Ubuntu 24.04). Full equivalence verified. |
+| Artifact | Path | Status | Hash |
+|----------|------|--------|------|
+| Plugin binary v2.1 | `bin/ats_proxy_filter_v21.so` | Versioned and tested | SHA256 `26c4371d0c32377498afeb80eb874a11bed2ac8c749c600073356bb3c2087674` |
+| Plugin C source v2.1 | `src/ats_proxy_filter_v21.c` | Versioned and tested | SHA256 `ac742e549c3081af44c320117ce0a8a1e8d9b80dbb76327f154e7d0797a7ffea` |
+| Installer | `scripts/install-ats-proxy.sh` | End-to-end tested 24.04/26.04 | Tracked by Git |
+| Regression test | `scripts/ats-regression-test.sh` | Tested 24.04/26.04 | Tracked by Git |
+| Hardening check | `scripts/ats-hardening-check.sh` | Tested 24.04/26.04 | Tracked by Git |
 
-## Plugin Binary v2.1
+## Provenance
 
-Path:
+- Original plugin binary recovered read-only from VM130 and VM134 disks via Proxmox/libguestfs.
+- Previous recovered binary SHA256: `6a1a73ff015ced9d6d35631fecf318d860bfbbf59b6066dcb3eecb8490d8f9c7`.
+- Current official binary was rebuilt from `src/ats_proxy_filter_v21.c` and validated on ATS 9.2.13.
+- ATS source tarball is verified by SHA512 in `scripts/install-ats-proxy.sh`.
 
-```text
-bin/ats_proxy_filter_v21.so
-```
+## Validation Summary
 
-Rebuilt from source on 2026-05-26.
-
-Identity:
-
-```text
-SHA256: 26c4371d0c32377498afeb80eb874a11bed2ac8c749c600073356bb3c2087674
-file: ELF 64-bit LSB shared object, x86-64, dynamically linked, not stripped
-```
-
-Previous recovered binary (deprecated):
-```text
-SHA256: 6a1a73ff015ced9d6d35631fecf318d860bfbbf59b6066dcb3eecb8490d8f9c7 (VM130/VM134 original)
-```
-
-Validation:
-- Source compiled successfully on ATS 9.2.13 (Ubuntu 24.04 VM135, GCC 13.x) and 26.04 (VM136, GCC 15.x).
-- Full test battery passed on both OS versions: DENY 403 "Forbidden", WHITELIST pass, AUTH missing 407 + Proxy-Authenticate, AUTH valid pass, AUTH wrong 407.
-- 50 concurrent DENY requests all returned 403 with zero failures.
-- Source compiles cleanly; only deprecation warnings for `TSUserArgGet/Set` (safe, same API as original ATS 9.2.13 example plugins).
-
-## Source-Code Status
-
-Source was reconstructed on 2026-05-25, API-corrected and compiled on 2026-05-26. Functional equivalence verified: full test battery matches documented behavior on both Ubuntu 24.04 and 26.04.
+| Target | Build/Install | Regression | Hardening |
+|--------|---------------|------------|-----------|
+| VM135 Ubuntu 24.04.4 | Installer OK | 9/9 OK | 25/25 OK |
+| VM136 Ubuntu 26.04 | Installer OK | 9/9 OK | 25/25 OK |
 
 ## Policy
 
-- Every required runtime artifact must be tracked or explicitly documented in this manifest.
-- Documentation must not refer to a required file as available unless `scripts/check-repo-consistency.sh` can verify it.
-- Binary artifacts are acceptable only with provenance, hash and test status.
-- Source code is preferred and required before declaring the plugin fully maintainable.
+- A required runtime artifact must be tracked in Git or documented here with explicit provenance and hash.
+- Documentation must not claim an artifact exists unless `scripts/check-repo-consistency.sh` can verify it.
+- Binary-only artifacts are temporary exceptions; source is required for maintainability.
+- Any new plugin binary must update this file, `TEST_MATRIX.md`, and `CHANGELOG.md` after real VM tests.

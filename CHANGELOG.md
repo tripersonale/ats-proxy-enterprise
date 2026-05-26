@@ -1,5 +1,30 @@
 # Changelog - ATS Proxy Enterprise
 
+## 0.13.0 - 2026-05-26
+
+### Added
+- `scripts/ats-hardening-check.sh` to verify systemd hardening, UFW, fail2ban, unattended upgrades, etckeeper, config permissions, health check and CVE helper.
+- `GUIDA_INSTALLAZIONE_TESTATA.md` as the current installation guide backed by VM tests.
+- `GUIDA_AGGIORNAMENTO_TESTATA.md` as the current update guide, with ATS 10.x explicitly marked non-validated.
+
+### Changed
+- `scripts/install-ats-proxy.sh` now supports config-file values with interactive fallback for missing/placeholder values.
+- ATS download verification now uses the official SHA512 hash instead of the unavailable `.sha256` URL.
+- Installer is idempotent for cached ATS/PCRE tarballs and cleans stale source trees before extraction.
+- fail2ban config is written to `/etc/fail2ban/jail.d/ats-proxy.local` and the service is restarted so the `ats-proxy` jail is active immediately.
+- Root documentation consolidated: README is now manifesto + quick start, historical guides moved to `archive/storico/`.
+
+### Verified
+- Full installer on VM135 Ubuntu 24.04.4: OK.
+- Full installer on VM136 Ubuntu 26.04: OK.
+- Regression on both VMs: `Passed: 9 Failed: 0`.
+- Hardening on both VMs: `Passed: 25 Failed: 0 Warnings: 0`.
+
+### Known Limitations
+- ATS 10.x remains not validated.
+- TLS frontend option remains not included in the 2026-05-26 end-to-end test battery.
+- Load beyond 50 concurrent requests remains not validated in this session.
+
 ## 0.12.0 - 2026-05-26
 
 ### Added
