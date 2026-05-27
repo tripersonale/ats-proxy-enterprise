@@ -60,6 +60,41 @@ done
 | `auth_nd` | whitelist bypasses auth | OK `200` |
 | `auth_nd` | other host needs auth | OK `407` |
 
+### Hardening Core v3
+
+Script:
+
+```bash
+sudo bash scripts/apply-ats-hardening-v3.sh
+sudo ATS_HARDENING_PROFILE=v3 ATS_HARDENING_STAGE=core bash scripts/ats-hardening-check.sh 8080
+```
+
+Risultato VM137:
+
+```text
+Passed: 19  Failed: 0  Warnings: 5
+```
+
+Warning attesi in stage `core`:
+
+- UFW non ancora attivo.
+- Porta proxy non ancora aperta via UFW.
+- fail2ban non ancora attivo.
+- `fail2ban-client` non ancora installato.
+- etckeeper non ancora inizializzato.
+
+Bug corretto durante test: `ats-ctl` ripiegava a gruppo `nogroup` quando non esisteva il gruppo `trafficserver`; su ATS10 v3 il gruppo corretto e `ats`. Dopo fix, `/etc/ats-proxy` resta `root:ats 0750`, i file restano `0640`, e tutti i mode plugin passano anche post-hardening.
+
+### Plugin v3 Post-Hardening Mode Tests
+
+| MODE | Esito post-hardening core |
+|---|---|
+| `off` | OK |
+| `deny` | OK |
+| `whitelist` | OK |
+| `auth_all` | OK |
+| `auth_nd` | OK |
+
 ## Installer End-To-End
 
 | Target | Config | Esito |
@@ -145,6 +180,7 @@ Passed: 25  Failed: 0  Warnings: 0
 | ATS 9.2.x minor successiva | Nessuna minor successiva a 9.2.13 pubblicata su `downloads.apache.org` al 2026-05-26 |
 | ATS 10.1.2 compile check raw headers | Non drop-in: `gcc` fallisce per richiesta C++17; `g++ -std=c++17` richiede header generati dal build system (`ts/apidefs.h`) |
 | ATS 10.1.2 PCRE | Richiede ancora PCRE1: `libpcre2-dev` non basta. VM137 validata con PCRE 8.45 in `/usr/local/pcre` |
+| ATS 10.1.2 hardening full | Core hardening validato; network hardening UFW/fail2ban/etckeeper ancora da applicare |
 | DNS cache gap del plugin corrente | Test rapido VM135/VM136 non lo riproduce: auth valida a `reddit.com` poi no-auth resta `407`; 5 richieste consecutive whitelist generano 5 log `WHITELIST` |
 | DNS cache gap vecchio plugin recuperato | Test rapido VM135 con SHA `6a1a73...`: auth valida `301`, poi no-auth `407`; non dimostra soluzione diversa dal plugin corrente |
 | Carico oltre 50 concorrenti | Non validato in questa sessione |

@@ -11,9 +11,11 @@
 | Installer | `scripts/install-ats-proxy.sh` | End-to-end tested 24.04/26.04 | Tracked by Git |
 | Regression test | `scripts/ats-regression-test.sh` | Tested 24.04/26.04 | Tracked by Git |
 | Hardening check | `scripts/ats-hardening-check.sh` | Tested 24.04/26.04 | Tracked by Git |
-| v3.0 config CLI | `scripts/ats-ctl` | Tested locally and on VM137 | SHA256 `eb8b19e386609bdf0d54d23c75d71abfe10694e99002a30b8b4f8e4ed1d9ed3d` |
+| v3.0 config CLI | `scripts/ats-ctl` | Tested locally and on VM137, including post-hardening group handling | SHA256 `61491fbccc1e0e40df786f813603b4803fb07085b27c591be55ff54a44f0012d` |
 | v3.0 plugin build script | `scripts/compile-plugin.sh` | Built v3 plugin on VM137 ATS 10.1.2 | SHA256 `756de6897ac02ab3e83a7007ee3215fa0fc0582930f387ba1759ffd2b618882e` |
 | v3.0 mode test | `scripts/ats-mode-test.sh` | 5/5 modes passed on VM137 ATS 10.1.2 | SHA256 `c45afb680764b00e7aaef8d1dcb666c7e3231ed12ea0e3bc02c17a9f71e66fad` |
+| v3.0 core hardening applicator | `scripts/apply-ats-hardening-v3.sh` | Applied on VM137; systemd hardening active | SHA256 `6c2993a385348af61c90b30c713e755436cda6c1d53502646bc81b9e19017dc7` |
+| v3-aware hardening check | `scripts/ats-hardening-check.sh` | VM137 v3 core: 19 OK, 0 fail, 5 expected warnings | SHA256 `d9f36602aebf7d85732e5cd6d09dd0a288a27a9bdd26b59c9ce9f95a39aa9094` |
 
 ## Provenance
 
@@ -29,7 +31,7 @@
 |--------|---------------|------------|-----------|
 | VM135 Ubuntu 24.04.4 | Installer OK | 9/9 OK | 25/25 OK |
 | VM136 Ubuntu 26.04 | Installer OK | 9/9 OK | 25/25 OK |
-| VM137 Ubuntu 26.04 + ATS 10.1.2 | Manual L0 build OK, plugin v3 build OK | v3 mode tests 11/11 OK | Not applied |
+| VM137 Ubuntu 26.04 + ATS 10.1.2 | Manual L0 build OK, plugin v3 build OK | v3 mode tests 11/11 OK before and after core hardening | Core hardening 19 OK, 0 fail, 5 warnings |
 
 ## Policy
 

@@ -2,6 +2,8 @@
 set -euo pipefail
 
 PROXY_PORT="${1:-8080}"
+PROFILE="${ATS_HARDENING_PROFILE:-v2}"
+STAGE="${ATS_HARDENING_STAGE:-full}"
 OK=0
 FAIL=0
 WARN=0
@@ -41,19 +43,42 @@ echo " Port: ${PROXY_PORT} | $(date -Is)"
 echo "============================================"
 echo ""
 
+soft_fail() {
+  if [ "$STAGE" = "core" ]; then
+    warn "$1"
+  else
+    fail "$1"
+  fi
+}
+
 check_cmd "trafficserver service active" systemctl is-active --quiet trafficserver
 
 unit=$(systemctl cat trafficserver 2>/dev/null || true)
+if [ "$PROFILE" = "v3" ]; then
+  expected_user='User=ats'
+  expected_group='Group=ats'
+  expected_rw='ReadWritePaths=/opt/trafficserver/etc/trafficserver /opt/trafficserver/var/trafficserver /opt/trafficserver/var/log/trafficserver /etc/ats-proxy /var/log/ats-health.log /run/trafficserver'
+  records_file='/opt/trafficserver/etc/trafficserver/records.yaml'
+  plugin_file='/opt/trafficserver/etc/trafficserver/plugin.config'
+  filter_file='/etc/ats-proxy/filter.conf'
+else
+  expected_user='User=ats'
+  expected_group='Group=ats'
+  expected_rw='ReadWritePaths=/etc/trafficserver /var/lib/trafficserver /var/log/trafficserver'
+  records_file='/etc/trafficserver/records.config'
+  plugin_file='/etc/trafficserver/plugin.config'
+  filter_file='/etc/trafficserver/ats_proxy_filter.conf'
+fi
 for setting in \
-  'User=ats' \
-  'Group=ats' \
+  "$expected_user" \
+  "$expected_group" \
   'ProtectSystem=strict' \
   'ProtectHome=true' \
   'PrivateTmp=true' \
   'PrivateDevices=true' \
   'NoNewPrivileges=true' \
   'ReadOnlyPaths=/opt/trafficserver' \
-  'ReadWritePaths=/etc/trafficserver /var/lib/trafficserver /var/log/trafficserver'; do
+  "$expected_rw"; do
   if grep -Fq "$setting" <<< "$unit"; then
     ok "systemd $setting"
   else
@@ -63,18 +88,18 @@ done
 
 if command -v ufw >/dev/null 2>&1; then
   ufw_status=$(sudo ufw status 2>/dev/null || true)
-  grep -q 'Status: active' <<< "$ufw_status" && ok "UFW active" || fail "UFW active"
-  grep -q "${PROXY_PORT}/tcp" <<< "$ufw_status" && ok "UFW allows proxy port ${PROXY_PORT}" || fail "UFW allows proxy port ${PROXY_PORT}"
+  grep -q 'Status: active' <<< "$ufw_status" && ok "UFW active" || soft_fail "UFW active"
+  grep -q "${PROXY_PORT}/tcp" <<< "$ufw_status" && ok "UFW allows proxy port ${PROXY_PORT}" || soft_fail "UFW allows proxy port ${PROXY_PORT}"
 else
-  fail "UFW installed"
+  soft_fail "UFW installed"
 fi
 
-check_cmd "fail2ban service active" systemctl is-active --quiet fail2ban
+if systemctl is-active --quiet fail2ban; then ok "fail2ban service active"; else soft_fail "fail2ban service active"; fi
 if command -v fail2ban-client >/dev/null 2>&1; then
   sudo fail2ban-client status sshd >/dev/null 2>&1 && ok "fail2ban sshd jail" || warn "fail2ban sshd jail not active"
   sudo fail2ban-client status ats-proxy >/dev/null 2>&1 && ok "fail2ban ats-proxy jail" || warn "fail2ban ats-proxy jail not active"
 else
-  fail "fail2ban-client installed"
+  soft_fail "fail2ban-client installed"
 fi
 
 check_cmd "unattended-upgrades service enabled" systemctl is-enabled --quiet unattended-upgrades
@@ -86,9 +111,9 @@ else
   warn "etckeeper not initialized"
 fi
 
-check_file_mode /etc/trafficserver/records.config 640
-check_file_mode /etc/trafficserver/plugin.config 640
-check_file_mode /etc/trafficserver/ats_proxy_filter.conf 640
+check_file_mode "$records_file" 640
+check_file_mode "$plugin_file" 640
+check_file_mode "$filter_file" 640
 check_file_mode /var/log/ats-health.log 640
 
 [ -x /opt/ats_health.sh ] && ok "health check executable" || fail "health check executable"

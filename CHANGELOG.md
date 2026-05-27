@@ -25,6 +25,12 @@
 - ATS 10.1.2 forward proxy L0 works with `reverse_proxy.enabled=0` and `url_remap.remap_required=0`.
 - Plugin v3.0 compiles against ATS 10.1.2 generated/installed headers and loads successfully.
 - Plugin v3.0 mode tests passed for `off`, `deny`, `whitelist`, `auth_all`, `auth_nd`.
+- Core hardening v3 applied on VM137: systemd sandbox active, ATS runs as `ats:ats`, `/etc/ats-proxy` readable only by root/ats, health check installed.
+- Plugin v3.0 mode tests pass after core hardening.
+
+### Fixed
+- `ats-ctl` now preserves `root:ats` ownership on `/etc/ats-proxy` when the service group is `ats`; previously it could fall back to `nogroup` and make the plugin unable to read `filter.conf` after hardening.
+- `ats-hardening-check.sh` supports `ATS_HARDENING_PROFILE=v3` and `ATS_HARDENING_STAGE=core` for ATS 10 `/opt/trafficserver` layouts.
 
 ## 0.14.0 - 2026-05-26
 

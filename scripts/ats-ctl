@@ -70,6 +70,9 @@ secure_files() {
   if getent group trafficserver >/dev/null 2>&1; then
     chgrp trafficserver "$CONFIG_DIR"/* 2>/dev/null || true
     chgrp trafficserver "$CONFIG_DIR" 2>/dev/null || true
+  elif getent group ats >/dev/null 2>&1; then
+    chgrp ats "$CONFIG_DIR"/* 2>/dev/null || true
+    chgrp ats "$CONFIG_DIR" 2>/dev/null || true
   elif getent group nogroup >/dev/null 2>&1; then
     chgrp nogroup "$CONFIG_DIR"/* 2>/dev/null || true
     chgrp nogroup "$CONFIG_DIR" 2>/dev/null || true

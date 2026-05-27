@@ -25,7 +25,7 @@
 |----|----|----|-------|
 | VM135 | Ubuntu 24.04.4 | 192.168.89.35 | Installer/regression/hardening OK |
 | VM136 | Ubuntu 26.04 | 192.168.89.36 | Installer/regression/hardening OK |
-| VM137 | Ubuntu 26.04 | 192.168.89.37 | ATS 10.1.2 L0 OK; plugin v3.0 build/load; 5 mode tests OK |
+| VM137 | Ubuntu 26.04 | 192.168.89.37 | ATS 10.1.2 L0 OK; plugin v3.0 build/load; 5 mode tests OK pre/post core hardening; hardening core 19 OK, 0 fail, 5 warning |
 
 Chiavi operative persistenti: `~/CULLA-instance/01_SECRETS/ssh/`.
 
@@ -57,7 +57,7 @@ sudo bash scripts/ats-hardening-check.sh 8080
 ## Gap Residui
 
 - ATS 10.x non validato.
-- Plugin v3.0 compilato/runtime-testato su VM137 ATS 10.1.2; hardening v3 non ancora applicato.
+- Plugin v3.0 compilato/runtime-testato su VM137 ATS 10.1.2; hardening core v3 applicato.
 - TLS frontend opzionale non incluso nella batteria e2e.
 - Carico oltre 50 richieste concorrenti non validato in questa sessione.
 - Revisione legale FEL-1.0/CLA pendente.
@@ -66,6 +66,6 @@ sudo bash scripts/ats-hardening-check.sh 8080
 
 ## Prossima Validazione
 
-- Applicare hardening v3 su VM137.
-- Eseguire `scripts/ats-hardening-check.sh` adattato ad ATS 10 se necessario.
-- Aggiornare installer atomico L0/L1 con quanto validato su VM137.
+- Applicare hardening network v3 su VM137: UFW, fail2ban, etckeeper.
+- Testare TLS frontend con plugin v3.
+- Aggiornare installer atomico L0/L1/L3 con quanto validato su VM137.
