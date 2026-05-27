@@ -31,7 +31,7 @@
 |--------|---------------|------------|-----------|
 | VM135 Ubuntu 24.04.4 | Installer OK | 9/9 OK | 25/25 OK |
 | VM136 Ubuntu 26.04 | Installer OK | 9/9 OK | 25/25 OK |
-| VM137 Ubuntu 26.04 + ATS 10.1.2 | Manual L0 build OK, plugin v3 build OK | v3 mode tests 11/11 OK before and after core hardening | Core hardening 19 OK, 0 fail, 5 warnings |
+| VM137 Ubuntu 26.04 + ATS 10.1.2 | Manual L0 build OK, plugin v3 build OK | v3 mode tests 11/11 OK before and after full hardening | Full hardening 25/25 OK (core + network) |
 
 ## Policy
 

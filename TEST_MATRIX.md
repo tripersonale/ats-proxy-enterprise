@@ -85,6 +85,25 @@ Warning attesi in stage `core`:
 
 Bug corretto durante test: `ats-ctl` ripiegava a gruppo `nogroup` quando non esisteva il gruppo `trafficserver`; su ATS10 v3 il gruppo corretto e `ats`. Dopo fix, `/etc/ats-proxy` resta `root:ats 0750`, i file restano `0640`, e tutti i mode plugin passano anche post-hardening.
 
+### Hardening Full v3 (Network Stage)
+
+```bash
+sudo apt-get install -y ufw fail2ban etckeeper
+sudo ufw --force enable && sudo ufw default deny incoming && sudo ufw allow from 192.168.89.0/24 to any port 8080 proto tcp && sudo ufw allow from 192.168.89.0/24 to any port 22 proto tcp
+# fail2ban ats-proxy filter: failregex = AUTH FAIL user=.* from=<HOST>
+sudo systemctl restart fail2ban
+sudo etckeeper init && sudo etckeeper commit
+sudo ATS_HARDENING_PROFILE=v3 ATS_HARDENING_STAGE=full bash scripts/ats-hardening-check.sh 8080
+```
+
+Risultato VM137:
+
+```text
+Passed: 25  Failed: 0  Warnings: 0
+```
+
+Tutti i 25 controlli verificati: systemd sandbox 11/11, UFW 2/2, fail2ban 3/3, unattended-upgrades 2/2, etckeeper 1/1, file permissions 4/4, health check 2/2, CVE helper 1/1.
+
 ### Plugin v3 Post-Hardening Mode Tests
 
 | MODE | Esito post-hardening core |
@@ -180,7 +199,7 @@ Passed: 25  Failed: 0  Warnings: 0
 | ATS 9.2.x minor successiva | Nessuna minor successiva a 9.2.13 pubblicata su `downloads.apache.org` al 2026-05-26 |
 | ATS 10.1.2 compile check raw headers | Non drop-in: `gcc` fallisce per richiesta C++17; `g++ -std=c++17` richiede header generati dal build system (`ts/apidefs.h`) |
 | ATS 10.1.2 PCRE | Richiede ancora PCRE1: `libpcre2-dev` non basta. VM137 validata con PCRE 8.45 in `/usr/local/pcre` |
-| ATS 10.1.2 hardening full | Core hardening validato; network hardening UFW/fail2ban/etckeeper ancora da applicare |
+| ATS 10.1.2 hardening full | Full hardening 25/25 OK: core + network (UFW, fail2ban ats-proxy, etckeeper) su VM137 |
 | DNS cache gap del plugin corrente | Test rapido VM135/VM136 non lo riproduce: auth valida a `reddit.com` poi no-auth resta `407`; 5 richieste consecutive whitelist generano 5 log `WHITELIST` |
 | DNS cache gap vecchio plugin recuperato | Test rapido VM135 con SHA `6a1a73...`: auth valida `301`, poi no-auth `407`; non dimostra soluzione diversa dal plugin corrente |
 | Carico oltre 50 concorrenti | Non validato in questa sessione |

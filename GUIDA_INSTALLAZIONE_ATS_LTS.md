@@ -2,7 +2,7 @@
 
 ## Stato
 
-Questa guida e il target v3.0: ATS 10.1.2 LTS su Ubuntu 26.04 LTS. Validazione iniziale completata su VM137 il 2026-05-27: build ATS, forward proxy L0, build/load plugin v3, 5 mode test e hardening core OK. Hardening network e TLS restano da validare.
+Questa guida e il target v3.0: ATS 10.1.2 LTS su Ubuntu 26.04 LTS. Validazione completata su VM137 il 2026-05-27: build ATS, forward proxy L0, build/load plugin v3, 5 mode test OK, full hardening 25/25 OK. Solo TLS frontend resta da validare.
 
 ## Obiettivo L0
 
@@ -89,7 +89,13 @@ Risultato validato su VM137:
 Passed: 19  Failed: 0  Warnings: 5
 ```
 
-I 5 warning sono attesi nello stage `core`: UFW, fail2ban ed etckeeper appartengono allo stage network/compliance successivo.
+Dopo hardening network completo (UFW + fail2ban ats-proxy + etckeeper):
+
+```text
+Passed: 25  Failed: 0  Warnings: 0
+```
+
+Comando: `ATS_HARDENING_PROFILE=v3 ATS_HARDENING_STAGE=full bash scripts/ats-hardening-check.sh 8080`
 
 ## Upgrade futuro
 
@@ -104,7 +110,6 @@ Ogni upgrade ATS richiede:
 
 ## Cosa resta speculativo/non validato
 
-- Comportamento TLS frontend su ATS 10.
-- Hardening network completo v3 su ATS 10.
+ - Comportamento TLS frontend su ATS 10.
 
 Questi punti diventano fatti solo dopo test VM.

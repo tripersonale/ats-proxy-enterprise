@@ -16,8 +16,7 @@
 - v3.0 client IP extraction uses `inet_ntop` for IPv4 and IPv6.
 
 ### Not yet validated
-- Hardening v3 on ATS 10.1.2.
-- TLS frontend with v3.0.
+- TLS frontend with v3.0 on ATS 10.1.2.
 
 ### Verified 2026-05-27
 - VM137 Ubuntu 26.04 LTS created for ATS 10.1.2 validation.
@@ -26,7 +25,8 @@
 - Plugin v3.0 compiles against ATS 10.1.2 generated/installed headers and loads successfully.
 - Plugin v3.0 mode tests passed for `off`, `deny`, `whitelist`, `auth_all`, `auth_nd`.
 - Core hardening v3 applied on VM137: systemd sandbox active, ATS runs as `ats:ats`, `/etc/ats-proxy` readable only by root/ats, health check installed.
-- Plugin v3.0 mode tests pass after core hardening.
+- Full hardening v3 applied on VM137 (25/25 OK): UFW active (8080+22), fail2ban with ats-proxy filter on auth failures, etckeeper initialized, unattended-upgrades active.
+- Plugin v3.0 mode tests pass after full hardening (off, deny, whitelist, auth_all, auth_nd).
 
 ### Fixed
 - `ats-ctl` now preserves `root:ats` ownership on `/etc/ats-proxy` when the service group is `ats`; previously it could fall back to `nogroup` and make the plugin unable to read `filter.conf` after hardening.
