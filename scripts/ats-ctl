@@ -1,0 +1,197 @@
+#!/bin/bash
+# Cosa fa:
+#   Gestisce la configurazione del plugin ATS Proxy Enterprise v3.0 senza editare
+#   manualmente file root-owned.
+#
+# Come si usa:
+#   sudo scripts/ats-ctl init
+#   sudo scripts/ats-ctl mode auth_nd
+#   sudo scripts/ats-ctl deny add bad.com
+#   sudo scripts/ats-ctl user add admin
+#
+# Perche esiste:
+#   Riduce l'attrito operativo: una modifica di policy non deve richiedere
+#   sudoedit, chmod, chown e restart manuali.
+#
+# Dipendenze:
+#   bash, openssl, systemctl, install, sed, grep, awk.
+#
+# Variabili richieste:
+#   ATS_PROXY_CONFIG_DIR opzionale, default /etc/ats-proxy.
+#
+# Rischi:
+#   Cambia policy di accesso proxy. Non stampa password. User add senza password
+#   come argomento usa prompt silenzioso.
+#
+# Rollback/cleanup:
+#   Ripristinare i file in /etc/ats-proxy da backup o usare mode off.
+#
+# TEST:
+#   bash -n scripts/ats-ctl; ATS_PROXY_CONFIG_DIR=/tmp/ats-proxy-test scripts/ats-ctl init.
+
+set -euo pipefail
+
+CONFIG_DIR="${ATS_PROXY_CONFIG_DIR:-/etc/ats-proxy}"
+SERVICE="${ATS_PROXY_SERVICE:-trafficserver}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+usage() {
+  cat <<'EOF'
+Usage: ats-ctl <command> [args]
+
+Commands:
+  init                         installa file config example se mancanti
+  mode <off|deny|whitelist|auth_all|auth_nd>
+  deny add|remove <domain>
+  whitelist add|remove <domain>
+  admin add|remove <ip>
+  user add <name> [password]
+  user remove <name>
+  status
+  reload                       riavvia trafficserver
+EOF
+}
+
+require_cmd() {
+  command -v "$1" >/dev/null 2>&1 || { printf '[ERROR] Missing command: %s\n' "$1" >&2; exit 1; }
+}
+
+ensure_dir() {
+  install -d -m 0750 "$CONFIG_DIR"
+}
+
+config_file() { printf '%s/%s\n' "$CONFIG_DIR" "$1"; }
+
+secure_files() {
+  chmod 0640 "$CONFIG_DIR"/* 2>/dev/null || true
+  if getent group trafficserver >/dev/null 2>&1; then
+    chgrp trafficserver "$CONFIG_DIR"/* 2>/dev/null || true
+  fi
+}
+
+init_config() {
+  ensure_dir
+  [ -f "$(config_file filter.conf)" ] || install -m 0640 "${REPO_DIR}/config/filter.conf.example" "$(config_file filter.conf)"
+  [ -f "$(config_file deny.list)" ] || install -m 0640 "${REPO_DIR}/config/deny.list.example" "$(config_file deny.list)"
+  [ -f "$(config_file whitelist.list)" ] || install -m 0640 "${REPO_DIR}/config/whitelist.list.example" "$(config_file whitelist.list)"
+  [ -f "$(config_file admin.list)" ] || install -m 0640 "${REPO_DIR}/config/admin.list.example" "$(config_file admin.list)"
+  [ -f "$(config_file auth.conf)" ] || install -m 0640 "${REPO_DIR}/config/auth.conf.example" "$(config_file auth.conf)"
+  secure_files
+  printf '[OK] Config initialized in %s\n' "$CONFIG_DIR"
+}
+
+set_mode() {
+  local mode="$1" file
+  case "$mode" in off|deny|whitelist|auth_all|auth_nd) ;; *) printf '[ERROR] Invalid mode: %s\n' "$mode" >&2; exit 2 ;; esac
+  file="$(config_file filter.conf)"
+  [ -f "$file" ] || init_config
+  if grep -q '^MODE ' "$file"; then
+    sed -i "s/^MODE .*/MODE ${mode}/" "$file"
+  else
+    printf 'MODE %s\n' "$mode" >> "$file"
+  fi
+  printf '[OK] MODE=%s\n' "$mode"
+}
+
+list_file_for() {
+  case "$1" in
+    deny) config_file deny.list ;;
+    whitelist) config_file whitelist.list ;;
+    admin) config_file admin.list ;;
+    *) exit 2 ;;
+  esac
+}
+
+list_add() {
+  local kind="$1" value="$2" file
+  file="$(list_file_for "$kind")"
+  [ -f "$file" ] || init_config
+  if grep -Fxq "$value" "$file"; then
+    printf '[OK] %s already present: %s\n' "$kind" "$value"
+  else
+    printf '%s\n' "$value" >> "$file"
+    printf '[OK] %s added: %s\n' "$kind" "$value"
+  fi
+}
+
+list_remove() {
+  local kind="$1" value="$2" file tmp
+  file="$(list_file_for "$kind")"
+  [ -f "$file" ] || { printf '[ERROR] Missing file: %s\n' "$file" >&2; exit 1; }
+  tmp="$(mktemp)"
+  grep -Fxv "$value" "$file" > "$tmp" || true
+  install -m 0640 "$tmp" "$file"
+  rm -f "$tmp"
+  printf '[OK] %s removed if present: %s\n' "$kind" "$value"
+}
+
+hash_password() {
+  local pass="$1" salt hash
+  require_cmd openssl
+  salt="$(openssl rand -hex 8)"
+  hash="$(printf '%s%s' "$salt" "$pass" | openssl dgst -sha256 -r | awk '{print $1}')"
+  printf '%s$%s\n' "$salt" "$hash"
+}
+
+user_add() {
+  local name="$1" pass="${2:-}" entry file tmp
+  file="$(config_file auth.conf)"
+  [ -f "$file" ] || init_config
+  if [ -z "$pass" ]; then
+    read -r -s -p "Password for ${name}: " pass
+    printf '\n'
+  fi
+  entry="$(hash_password "$pass")"
+  tmp="$(mktemp)"
+  grep -Ev "^USER[[:space:]]+${name}[[:space:]]" "$file" > "$tmp" || true
+  printf 'USER %s %s\n' "$name" "$entry" >> "$tmp"
+  install -m 0640 "$tmp" "$file"
+  rm -f "$tmp"
+  secure_files
+  printf '[OK] user configured: %s\n' "$name"
+}
+
+user_remove() {
+  local name="$1" file tmp
+  file="$(config_file auth.conf)"
+  tmp="$(mktemp)"
+  grep -Ev "^USER[[:space:]]+${name}[[:space:]]" "$file" > "$tmp" || true
+  install -m 0640 "$tmp" "$file"
+  rm -f "$tmp"
+  printf '[OK] user removed if present: %s\n' "$name"
+}
+
+status() {
+  printf '[STEP] Config dir: %s\n' "$CONFIG_DIR"
+  [ -f "$(config_file filter.conf)" ] && grep -E '^MODE ' "$(config_file filter.conf)" || true
+  printf 'deny: %s\n' "$(grep -Ev '^(#|$)' "$(config_file deny.list)" 2>/dev/null | wc -l)"
+  printf 'whitelist: %s\n' "$(grep -Ev '^(#|$)' "$(config_file whitelist.list)" 2>/dev/null | wc -l)"
+  printf 'admin: %s\n' "$(grep -Ev '^(#|$)' "$(config_file admin.list)" 2>/dev/null | wc -l)"
+  printf 'users: %s\n' "$(grep -E '^USER ' "$(config_file auth.conf)" 2>/dev/null | wc -l)"
+}
+
+reload_service() {
+  systemctl restart "$SERVICE"
+  printf '[OK] restarted %s\n' "$SERVICE"
+}
+
+[ "$#" -gt 0 ] || { usage; exit 2; }
+
+cmd="$1"; shift
+case "$cmd" in
+  init) init_config ;;
+  mode) [ "$#" -eq 1 ] || { usage; exit 2; }; set_mode "$1" ;;
+  deny|whitelist|admin)
+    [ "$#" -eq 2 ] || { usage; exit 2; }
+    case "$1" in add) list_add "$cmd" "$2" ;; remove) list_remove "$cmd" "$2" ;; *) usage; exit 2 ;; esac
+    ;;
+  user)
+    [ "$#" -ge 2 ] || { usage; exit 2; }
+    case "$1" in add) user_add "$2" "${3:-}" ;; remove) user_remove "$2" ;; *) usage; exit 2 ;; esac
+    ;;
+  status) status ;;
+  reload) reload_service ;;
+  -h|--help|help) usage ;;
+  *) printf '[ERROR] Unknown command: %s\n' "$cmd" >&2; usage; exit 2 ;;
+esac

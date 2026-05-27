@@ -1,0 +1,13 @@
+# ATS Proxy Enterprise v3.0 - admin bypass
+#
+# Copiare in: /etc/ats-proxy/admin.list
+# Una voce per riga. La forma breve e valida:
+#   192.168.89.10
+# Oppure la forma esplicita:
+#   ADMIN 192.168.89.10
+#
+# Gli IP admin bypassano tutti i MODE. Usare solo per host amministrativi fidati.
+#
+# Esempi commentati:
+# 192.168.89.10
+# 192.168.89.11

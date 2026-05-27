@@ -1,0 +1,12 @@
+# ATS Proxy Enterprise v3.0 - utenti Basic Auth hashati
+#
+# Copiare in: /etc/ats-proxy/auth.conf
+# Non scrivere password in chiaro.
+# Generare utenti con:
+#   sudo ats-ctl user add admin
+#
+# Formato interno:
+#   USER <nome> <salt>$<sha256(salt+password)>
+#
+# Esempio fittizio, non usare:
+# USER admin 0123456789abcdef$aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa

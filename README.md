@@ -7,6 +7,28 @@
 
 [![License: FEL-1.0](https://img.shields.io/badge/license-FEL--1.0-blue)](LICENSE.md) [![Hardening: 25/25](https://img.shields.io/badge/hardening-25%2F25-brightgreen)](TEST_MATRIX.md) [![Regression: 9/9](https://img.shields.io/badge/regression-9%2F9-brightgreen)](TEST_MATRIX.md)
 
+## Stato v3.0 Beta
+
+La linea v3.0 e in costruzione per riscattare l'esperienza di installazione emersa nel test reale del 2026-05-26: ATS core, plugin, auth, hardening e operativita devono essere mattoni separati.
+
+Documenti chiave:
+
+- `ARCHITETTURA_ATS_PROXY_V3.md` — architettura validata a livelli e plugin modes.
+- `GUIDA_INSTALLAZIONE_ATS_LTS.md` — target ATS 10.1.2 LTS su Ubuntu 26.04.
+- `MANUALE_ATS.md` — manuale ATS minimo.
+- `GUIDA_PLUGIN_URL_FILTERING_AUTH.md` — URL filtering, auth e test dei modes.
+- `DOCUMENTO_PLUGIN_ENTERPRISE.md` — affidabilita, limiti e roadmap enterprise.
+
+Artefatti v3.0:
+
+- `src/ats_proxy_filter_v30.c` — plugin unico con `off`, `deny`, `whitelist`, `auth_all`, `auth_nd`.
+- `config/` — file example separati per filter, deny, whitelist, admin, auth.
+- `scripts/ats-ctl` — gestione configurazione senza edit manuale.
+- `scripts/compile-plugin.sh` — build ripetibile plugin ATS 9/10.
+- `scripts/ats-mode-test.sh` — test runtime per mode.
+
+Stato: sorgente/tooling pronti, runtime ATS 10.1.2 ancora da validare su VM pulita.
+
 ---
 
 ## Manifesto ICT — I 10 Principi Operativi

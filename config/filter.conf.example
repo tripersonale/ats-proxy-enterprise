@@ -1,0 +1,21 @@
+# ATS Proxy Enterprise v3.0 - configurazione principale
+#
+# Copiare in: /etc/ats-proxy/filter.conf
+# Proprietario consigliato: root:trafficserver
+# Permessi consigliati: 0640
+#
+# MODE disponibili:
+#   off        Plugin caricato ma trasparente: tutto passa.
+#   deny       Deny list attiva, tutto il resto passa senza auth.
+#   whitelist  Solo whitelist passa; il resto riceve 403.
+#   auth_all   Auth richiesta per tutto; utente valido sovrasta deny/whitelist.
+#   auth_nd    Deny blocca sempre; whitelist passa senza auth; il resto richiede auth.
+
+MODE auth_nd
+
+# I file separati tengono leggibile ogni responsabilita.
+# Forma esplicita: INCLUDE <tipo> <path>
+INCLUDE admin /etc/ats-proxy/admin.list
+INCLUDE deny /etc/ats-proxy/deny.list
+INCLUDE whitelist /etc/ats-proxy/whitelist.list
+INCLUDE /etc/ats-proxy/auth.conf

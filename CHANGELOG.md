@@ -1,5 +1,25 @@
 # Changelog - ATS Proxy Enterprise
 
+## Unreleased - v3.0 beta architecture
+
+### Added
+- Plugin source `src/ats_proxy_filter_v30.c` with modes `off`, `deny`, `whitelist`, `auth_all`, `auth_nd`.
+- Split configuration examples in `config/`: `filter.conf`, `deny.list`, `whitelist.list`, `admin.list`, `auth.conf`.
+- `scripts/ats-ctl` for mode/list/user management without manual root-owned edits.
+- `scripts/compile-plugin.sh` for repeatable plugin builds against ATS 9/10 source trees.
+- `scripts/ats-mode-test.sh` for mode-specific runtime validation.
+- v3.0 documentation: architecture, plugin filtering/auth, ATS LTS install target, ATS manual, enterprise reliability note.
+
+### Security
+- v3.0 auth design stores `salt$sha256(salt+password)` instead of plaintext passwords.
+- v3.0 auth comparison uses constant-time string comparison.
+- v3.0 client IP extraction uses `inet_ntop` for IPv4 and IPv6.
+
+### Not yet validated
+- Runtime ATS 10.1.2 on Ubuntu 26.04.
+- v3.0 plugin compile/load/regression on ATS 10.
+- TLS frontend with v3.0.
+
 ## 0.14.0 - 2026-05-26
 
 ### Changed

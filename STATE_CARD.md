@@ -6,6 +6,7 @@
 - Directory operativa: `/home/mvb/CULLA-instance/03_ICT/ats-proxy/`
 - Versione progetto: `0.14.0`
 - Baseline supportata: ATS 9.2.13 su Ubuntu 24.04/26.04
+- Direzione v3.0: ATS 10.1.2 LTS su Ubuntu 26.04, plugin unico a modi, config `/etc/ats-proxy/`, auth hashata.
 
 ## Stato Corrente
 
@@ -16,6 +17,7 @@
 - Plugin sorgente e binario versionati con hash in `ARTIFACTS.md`.
 - Documentazione ricostruita v0.14.0: `GUIDA_INSTALLAZIONE.md`, `GUIDA_OPERATIVA.md`.
 - Guide storiche archiviate in `archive/storico/`.
+- Architettura v3.0 avviata: `src/ats_proxy_filter_v30.c`, `scripts/ats-ctl`, `scripts/compile-plugin.sh`, `scripts/ats-mode-test.sh`, guide v3.0 dedicate.
 
 ## VM Lab
 
@@ -44,14 +46,27 @@ sudo bash scripts/ats-hardening-check.sh 8080
 - `scripts/install-ats-proxy.sh`: installer supportato.
 - `scripts/ats-regression-test.sh`: test funzionale.
 - `scripts/ats-hardening-check.sh`: test hardening.
+- `ARCHITETTURA_ATS_PROXY_V3.md`: architettura target plugin/installer atomico.
+- `GUIDA_PLUGIN_URL_FILTERING_AUTH.md`: manuale plugin v3.0 e test mode.
+- `GUIDA_INSTALLAZIONE_ATS_LTS.md`: target ATS 10.1.2 su Ubuntu 26.04.
+- `MANUALE_ATS.md`: manuale ATS minimo.
 - `ARTIFACTS.md`: manifest runtime.
 - `TEST_MATRIX.md`: evidenza test.
 
 ## Gap Residui
 
 - ATS 10.x non validato.
+- Plugin v3.0 non ancora compilato/runtime-testato su VM ATS 10.
 - TLS frontend opzionale non incluso nella batteria e2e.
 - Carico oltre 50 richieste concorrenti non validato in questa sessione.
 - Revisione legale FEL-1.0/CLA pendente.
 - Procedura formale di vulnerability assessment non ancora definita.
 - Penetration test annuale non ancora eseguito.
+
+## Prossima Validazione
+
+- Creare VM lab Ubuntu 26.04 dedicata, senza distruggere VM esistenti senza conferma target.
+- Build ATS 10.1.2 con CMake.
+- Compilare `src/ats_proxy_filter_v30.c`.
+- Eseguire `scripts/ats-mode-test.sh` per `off`, `deny`, `whitelist`, `auth_all`, `auth_nd`.
+- Aggiornare `ARTIFACTS.md`, `TEST_MATRIX.md`, `CHANGELOG.md` solo dopo test reale.
