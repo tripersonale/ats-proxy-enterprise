@@ -16,9 +16,15 @@
 - v3.0 client IP extraction uses `inet_ntop` for IPv4 and IPv6.
 
 ### Not yet validated
-- Runtime ATS 10.1.2 on Ubuntu 26.04.
-- v3.0 plugin compile/load/regression on ATS 10.
+- Hardening v3 on ATS 10.1.2.
 - TLS frontend with v3.0.
+
+### Verified 2026-05-27
+- VM137 Ubuntu 26.04 LTS created for ATS 10.1.2 validation.
+- ATS 10.1.2 builds and installs on Ubuntu 26.04 when PCRE1 8.45 is compiled under `/usr/local/pcre`.
+- ATS 10.1.2 forward proxy L0 works with `reverse_proxy.enabled=0` and `url_remap.remap_required=0`.
+- Plugin v3.0 compiles against ATS 10.1.2 generated/installed headers and loads successfully.
+- Plugin v3.0 mode tests passed for `off`, `deny`, `whitelist`, `auth_all`, `auth_nd`.
 
 ## 0.14.0 - 2026-05-26
 

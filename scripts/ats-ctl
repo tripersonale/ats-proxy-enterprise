@@ -35,6 +35,8 @@ CONFIG_DIR="${ATS_PROXY_CONFIG_DIR:-/etc/ats-proxy}"
 SERVICE="${ATS_PROXY_SERVICE:-trafficserver}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+TEMPLATE_DIR="${ATS_PROXY_TEMPLATE_DIR:-${REPO_DIR}/config}"
+TRAFFICSERVER_CTL="${ATS_TRAFFICSERVER_CTL:-/opt/trafficserver/bin/trafficserver}"
 
 usage() {
   cat <<'EOF'
@@ -67,16 +69,21 @@ secure_files() {
   chmod 0640 "$CONFIG_DIR"/* 2>/dev/null || true
   if getent group trafficserver >/dev/null 2>&1; then
     chgrp trafficserver "$CONFIG_DIR"/* 2>/dev/null || true
+    chgrp trafficserver "$CONFIG_DIR" 2>/dev/null || true
+  elif getent group nogroup >/dev/null 2>&1; then
+    chgrp nogroup "$CONFIG_DIR"/* 2>/dev/null || true
+    chgrp nogroup "$CONFIG_DIR" 2>/dev/null || true
   fi
 }
 
 init_config() {
   ensure_dir
-  [ -f "$(config_file filter.conf)" ] || install -m 0640 "${REPO_DIR}/config/filter.conf.example" "$(config_file filter.conf)"
-  [ -f "$(config_file deny.list)" ] || install -m 0640 "${REPO_DIR}/config/deny.list.example" "$(config_file deny.list)"
-  [ -f "$(config_file whitelist.list)" ] || install -m 0640 "${REPO_DIR}/config/whitelist.list.example" "$(config_file whitelist.list)"
-  [ -f "$(config_file admin.list)" ] || install -m 0640 "${REPO_DIR}/config/admin.list.example" "$(config_file admin.list)"
-  [ -f "$(config_file auth.conf)" ] || install -m 0640 "${REPO_DIR}/config/auth.conf.example" "$(config_file auth.conf)"
+  [ -d "$TEMPLATE_DIR" ] || { printf '[ERROR] Template dir not found: %s\n' "$TEMPLATE_DIR" >&2; exit 1; }
+  [ -f "$(config_file filter.conf)" ] || install -m 0640 "${TEMPLATE_DIR}/filter.conf.example" "$(config_file filter.conf)"
+  [ -f "$(config_file deny.list)" ] || install -m 0640 "${TEMPLATE_DIR}/deny.list.example" "$(config_file deny.list)"
+  [ -f "$(config_file whitelist.list)" ] || install -m 0640 "${TEMPLATE_DIR}/whitelist.list.example" "$(config_file whitelist.list)"
+  [ -f "$(config_file admin.list)" ] || install -m 0640 "${TEMPLATE_DIR}/admin.list.example" "$(config_file admin.list)"
+  [ -f "$(config_file auth.conf)" ] || install -m 0640 "${TEMPLATE_DIR}/auth.conf.example" "$(config_file auth.conf)"
   secure_files
   printf '[OK] Config initialized in %s\n' "$CONFIG_DIR"
 }
@@ -172,8 +179,13 @@ status() {
 }
 
 reload_service() {
-  systemctl restart "$SERVICE"
-  printf '[OK] restarted %s\n' "$SERVICE"
+  if [ -x "$TRAFFICSERVER_CTL" ]; then
+    "$TRAFFICSERVER_CTL" restart
+    printf '[OK] restarted ATS via %s\n' "$TRAFFICSERVER_CTL"
+  else
+    systemctl restart "$SERVICE"
+    printf '[OK] restarted %s\n' "$SERVICE"
+  fi
 }
 
 [ "$#" -gt 0 ] || { usage; exit 2; }

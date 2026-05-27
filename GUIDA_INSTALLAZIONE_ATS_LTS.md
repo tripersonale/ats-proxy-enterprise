@@ -2,7 +2,7 @@
 
 ## Stato
 
-Questa guida e il target v3.0: ATS 10.1.2 LTS su Ubuntu 26.04 LTS. Al momento e **da validare su VM pulita**; i risultati v0.14.0 validati restano ATS 9.2.13 su Ubuntu 24.04/26.04.
+Questa guida e il target v3.0: ATS 10.1.2 LTS su Ubuntu 26.04 LTS. Validazione iniziale completata su VM137 il 2026-05-27: build ATS, forward proxy L0, build/load plugin v3 e 5 mode test OK. Hardening v3 e TLS restano da validare.
 
 ## Obiettivo L0
 
@@ -17,6 +17,19 @@ sudo apt-get install -y build-essential cmake ninja-build pkg-config \
   libunwind-dev libcurl4-openssl-dev tcl-dev
 ```
 
+ATS 10.1.2 richiede ancora PCRE1 per la build: `libpcre2-dev` non basta.
+
+```bash
+cd /tmp
+wget https://sourceforge.net/projects/pcre/files/pcre/8.45/pcre-8.45.tar.bz2/download -O pcre-8.45.tar.bz2
+tar -xjf pcre-8.45.tar.bz2
+cd pcre-8.45
+./configure --prefix=/usr/local/pcre --enable-utf --enable-unicode-properties
+make -j"$(nproc)"
+sudo make install
+sudo ldconfig
+```
+
 ## Build ATS 10.1.2
 
 ```bash
@@ -24,14 +37,26 @@ cd /tmp
 wget https://downloads.apache.org/trafficserver/trafficserver-10.1.2.tar.bz2
 tar -xjf trafficserver-10.1.2.tar.bz2
 cd trafficserver-10.1.2
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt/trafficserver
+cmake -S . -B build \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX=/opt/trafficserver \
+  -DPCRE_LIBRARY=/usr/local/pcre/lib/libpcre.so \
+  -DPCRE_INCLUDE_DIR=/usr/local/pcre/include
 cmake --build build -j"$(nproc)"
 sudo cmake --install build
 ```
 
 ## Config forward proxy minima
 
-ATS 10 usa configurazione YAML dove disponibile. La procedura definitiva andra verificata su VM per confermare nomi chiave e path effettivi.
+ATS 10 usa `records.yaml`. Per forward proxy L0 su VM137 sono state validate queste modifiche:
+
+```yaml
+records:
+  reverse_proxy:
+    enabled: 0
+  url_remap:
+    remap_required: 0
+```
 
 Checklist L0:
 
@@ -62,10 +87,9 @@ Ogni upgrade ATS richiede:
 5. Test L0, poi test plugin mode, poi hardening check.
 6. Aggiornamento `ARTIFACTS.md`, `TEST_MATRIX.md`, `CHANGELOG.md`.
 
-## Cosa e speculativo
+## Cosa resta speculativo/non validato
 
-- Mapping definitivo `records.yaml` per ATS 10.1.2 su Ubuntu 26.04.
-- Compatibilita runtime plugin v3.0 su ATS 10.
 - Comportamento TLS frontend su ATS 10.
+- Hardening completo v3 su ATS 10.
 
 Questi punti diventano fatti solo dopo test VM.

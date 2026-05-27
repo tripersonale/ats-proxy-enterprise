@@ -11,6 +11,54 @@ Regola: ogni comando pubblicato deve essere testato o marcato come non validato.
 | Sintassi hardening check | `bash -n scripts/ats-hardening-check.sh` | OK, 2026-05-26 |
 | Consistenza repo | `bash scripts/check-repo-consistency.sh` | OK, 2026-05-26 |
 | Package release | `bash scripts/package-release.sh --output-dir /tmp/opencode/ats-final-pkg --force` | OK, 2026-05-26 |
+| Sintassi v3 tooling | `bash -n scripts/compile-plugin.sh scripts/ats-ctl scripts/ats-mode-test.sh` | OK, 2026-05-27 |
+| Consistenza repo post-v3 | `bash scripts/check-repo-consistency.sh` | OK, 2026-05-27 |
+
+## ATS 10.1.2 + Plugin v3.0 Beta
+
+Target: VM137 `ats-lab-26-ats10`, Ubuntu 26.04 LTS, IP `192.168.89.37`.
+
+| Area | Comando/azione | Esito |
+|---|---|---|
+| Cloud-init VM | VM137 Proxmox da `resolute-server-cloudimg-amd64.qcow2` | OK |
+| OS | `lsb_release -a` | Ubuntu 26.04 LTS, codename `resolute` |
+| ATS 10 CMake senza PCRE1 | `cmake -S . -B build ...` | FAIL previsto: `Could NOT find PCRE` |
+| PCRE1 | PCRE 8.45 compilato in `/usr/local/pcre` | OK |
+| ATS 10 CMake con PCRE1 | `-DPCRE_LIBRARY=/usr/local/pcre/lib/libpcre.so -DPCRE_INCLUDE_DIR=/usr/local/pcre/include` | OK |
+| ATS 10 build | `cmake --build /tmp/trafficserver-10.1.2/build -j$(nproc)` | OK |
+| ATS 10 install | `sudo cmake --install /tmp/trafficserver-10.1.2/build` | OK |
+| Config verify | `sudo /opt/trafficserver/bin/traffic_server -C verify_config` | OK |
+| Forward proxy L0 | `curl -x http://127.0.0.1:8080 http://example.com` | `200` dopo `reverse_proxy.enabled=0` e `url_remap.remap_required=0` |
+| Plugin v3 build | `bash scripts/compile-plugin.sh --ats-src /tmp/trafficserver-10.1.2 --out bin/ats_proxy_filter_v30.so --cxx` | OK, SHA256 `157b97f...` |
+| Plugin v3 load | `plugin.config = ats_proxy_filter_v30.so` | OK, log `plugin loaded` |
+| `ats-ctl` installed mode | `ATS_PROXY_TEMPLATE_DIR=/home/ubuntu/ats-proxy/config ats-ctl init` | OK |
+
+### Plugin v3 Mode Tests
+
+Command:
+
+```bash
+for mode in off deny whitelist auth_all auth_nd; do
+  sudo ATS_PROXY_CONFIG_DIR=/etc/ats-proxy \
+    ATS_PROXY_TEMPLATE_DIR=/home/ubuntu/ats-proxy/config \
+    ATS_CTL=/usr/local/bin/ats-ctl \
+    bash scripts/ats-mode-test.sh "$mode" 8080 admin '<password>'
+done
+```
+
+| MODE | Test | Esito |
+|---|---|---|
+| `off` | denied host passes | OK `200` |
+| `deny` | denied host -> 403 | OK `403` |
+| `deny` | other host passes | OK `200` |
+| `whitelist` | listed host passes | OK `200` |
+| `whitelist` | non-listed host -> 403 | OK `403` |
+| `auth_all` | missing auth -> 407 | OK `407` |
+| `auth_all` | valid auth passes whitelist | OK `200` |
+| `auth_all` | valid auth overrides deny | OK `200` |
+| `auth_nd` | deny before auth -> 403 | OK `403` |
+| `auth_nd` | whitelist bypasses auth | OK `200` |
+| `auth_nd` | other host needs auth | OK `407` |
 
 ## Installer End-To-End
 
@@ -96,6 +144,7 @@ Passed: 25  Failed: 0  Warnings: 0
 | TLS frontend `ATS_TLS_ENABLED=y` | Non incluso nel test end-to-end del 2026-05-26 |
 | ATS 9.2.x minor successiva | Nessuna minor successiva a 9.2.13 pubblicata su `downloads.apache.org` al 2026-05-26 |
 | ATS 10.1.2 compile check raw headers | Non drop-in: `gcc` fallisce per richiesta C++17; `g++ -std=c++17` richiede header generati dal build system (`ts/apidefs.h`) |
+| ATS 10.1.2 PCRE | Richiede ancora PCRE1: `libpcre2-dev` non basta. VM137 validata con PCRE 8.45 in `/usr/local/pcre` |
 | DNS cache gap del plugin corrente | Test rapido VM135/VM136 non lo riproduce: auth valida a `reddit.com` poi no-auth resta `407`; 5 richieste consecutive whitelist generano 5 log `WHITELIST` |
 | DNS cache gap vecchio plugin recuperato | Test rapido VM135 con SHA `6a1a73...`: auth valida `301`, poi no-auth `407`; non dimostra soluzione diversa dal plugin corrente |
 | Carico oltre 50 concorrenti | Non validato in questa sessione |

@@ -59,6 +59,15 @@ done
 [ -d "$ATS_SRC" ] || { printf '[ERROR] ATS source/build path not found: %s\n' "$ATS_SRC" >&2; exit 1; }
 
 INCLUDES=("-I$ATS_SRC" "-I$ATS_SRC/include")
+for extra in \
+  /opt/trafficserver/include \
+  /opt/trafficserver/include/tscore \
+  "$ATS_SRC/lib/swoc/include" \
+  "$ATS_SRC/build/lib/swoc/include"; do
+  if [ -d "$extra" ]; then
+    INCLUDES+=("-I$extra")
+  fi
+done
 if [ -d "$ATS_SRC/build/include" ]; then
   INCLUDES+=("-I$ATS_SRC/build/include")
 fi

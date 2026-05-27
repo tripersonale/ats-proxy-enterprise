@@ -36,7 +36,7 @@
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include <openssl/sha.h>
+#include <openssl/evp.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -135,13 +135,23 @@ static int safe_eq(const char *a, const char *b) {
 }
 
 static void sha256_hex(const char *salt, const char *pass, char out[65]) {
-  SHA256_CTX ctx;
-  unsigned char digest[SHA256_DIGEST_LENGTH];
-  SHA256_Init(&ctx);
-  SHA256_Update(&ctx, salt, strlen(salt));
-  SHA256_Update(&ctx, pass, strlen(pass));
-  SHA256_Final(digest, &ctx);
-  for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) snprintf(out + (i * 2), 3, "%02x", digest[i]);
+  EVP_MD_CTX *ctx = EVP_MD_CTX_new();
+  unsigned char digest[EVP_MAX_MD_SIZE];
+  unsigned int digest_len = 0;
+  if (!ctx) {
+    out[0] = '\0';
+    return;
+  }
+  EVP_DigestInit_ex(ctx, EVP_sha256(), NULL);
+  EVP_DigestUpdate(ctx, salt, strlen(salt));
+  EVP_DigestUpdate(ctx, pass, strlen(pass));
+  EVP_DigestFinal_ex(ctx, digest, &digest_len);
+  EVP_MD_CTX_free(ctx);
+  if (digest_len != 32) {
+    out[0] = '\0';
+    return;
+  }
+  for (unsigned int i = 0; i < digest_len; i++) snprintf(out + (i * 2), 3, "%02x", digest[i]);
   out[64] = '\0';
 }
 
@@ -198,9 +208,13 @@ static void add_user(const char *user, const char *salt_hash) {
     TSError("[ats_proxy_filter_v30] invalid USER hash length for %s", user);
     return;
   }
+  if (strlen(tmp) >= sizeof(salts[0])) {
+    TSError("[ats_proxy_filter_v30] invalid USER salt length for %s", user);
+    return;
+  }
   snprintf(users[users_cnt], sizeof(users[0]), "%s", user);
-  snprintf(salts[users_cnt], sizeof(salts[0]), "%s", tmp);
-  snprintf(hashes[users_cnt], sizeof(hashes[0]), "%s", sep);
+  memcpy(salts[users_cnt], tmp, strlen(tmp) + 1);
+  memcpy(hashes[users_cnt], sep, 65);
   users_cnt++;
 }
 
