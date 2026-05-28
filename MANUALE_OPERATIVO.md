@@ -4,10 +4,10 @@ Manuale unificato per l'operatore. Copre gestione ATS, plugin v3, troubleshootin
 configurazione client, backup e manutenzione periodica.
 
 **Convenzioni path**: questo manuale usa i path di ATS9 da pacchetto Ubuntu
-(`/etc/trafficserver`, `/opt/trafficserver/var/trafficserver/`). Se ATS e compilato manualmente
+(`/etc/trafficserver`, `/var/trafficserver/`). Se ATS e compilato manualmente
 in `/opt/trafficserver`, i path equivalenti sono:
 Config: `/opt/trafficserver/etc/trafficserver/`
-Log: `/opt/trafficserver/var/log/trafficserver/`
+Log: `/var/log/trafficserver/`
 Binari: `/opt/trafficserver/bin/` (al posto di `/usr/bin/`)
 
 ---
@@ -33,7 +33,7 @@ Binari: `/opt/trafficserver/bin/` (al posto di `/usr/bin/`)
 | `sudo ats-ctl reload` | Applica modifiche e riavvia ATS |
 | `sudo ats-ctl init` | Inizializza file config se mancanti |
 | `/opt/trafficserver/bin/traffic_top` | Metriche in tempo reale |
-| `sudo tail -f /opt/trafficserver/var/log/trafficserver/diags.log` | Segui log diagnostici |
+| `sudo tail -f /var/log/trafficserver/diags.log` | Segui log diagnostici |
 | `sudo bash scripts/ats-mode-test.sh auth_nd 8080 admin '<password>'` | Test automatico policy |
 | `sudo ATS_HARDENING_PROFILE=v3 ATS_HARDENING_STAGE=full bash scripts/ats-hardening-check.sh 8080` | Verifica hardening |
 | `sudo bash scripts/ats-version-report.sh` | Report diagnostico completo |
@@ -96,34 +96,34 @@ curl -s -o /dev/null -w '%{http_code}\n' --connect-timeout 5 \
 | `squid.blog` | Log accessi in formato squid-compatibile |
 | `audit.log` | Richieste processate (audit trail) |
 
-Path canonico: `/opt/trafficserver/var/log/trafficserver/`
-(Se ATS compilato: `/opt/trafficserver/var/log/trafficserver/`)
+Path canonico: `/var/log/trafficserver/`
+(Se ATS compilato: `/var/log/trafficserver/`)
 
 ```bash
 # Seguire log in tempo reale
-sudo tail -f /opt/trafficserver/var/log/trafficserver/diags.log
+sudo tail -f /var/log/trafficserver/diags.log
 
 # Ultimi 20 errori
 sudo grep -i 'error\|fail\|alert' \
-  /opt/trafficserver/var/log/trafficserver/diags.log | tail -20
+  /var/log/trafficserver/diags.log | tail -20
 
 # Tentativi di auth falliti
 sudo grep 'AUTH FAIL' \
-  /opt/trafficserver/var/log/trafficserver/diags.log | tail -20
+  /var/log/trafficserver/diags.log | tail -20
 
 # Domini bloccati nelle ultime richieste
 sudo grep 'DENY' \
-  /opt/trafficserver/var/log/trafficserver/diags.log | tail -20
+  /var/log/trafficserver/diags.log | tail -20
 
 # Chi ha usato il bypass admin
 sudo grep 'ADMIN bypass' \
-  /opt/trafficserver/var/log/trafficserver/diags.log | tail -10
+  /var/log/trafficserver/diags.log | tail -10
 
 # Richieste processate (audit)
-sudo tail -50 /opt/trafficserver/var/log/trafficserver/audit.log
+sudo tail -50 /var/log/trafficserver/audit.log
 
 # Ultima riga di log (check rapido che il servizio processi richieste)
-sudo tail -1 /opt/trafficserver/var/log/trafficserver/diags.log
+sudo tail -1 /var/log/trafficserver/diags.log
 ```
 
 **Cosa cercare nei log**:
@@ -137,7 +137,7 @@ sudo tail -1 /opt/trafficserver/var/log/trafficserver/diags.log
 **Log del plugin specifico**:
 
 ```bash
-sudo grep ats_proxy_filter /opt/trafficserver/var/log/trafficserver/diags.log | tail -20
+sudo grep ats_proxy_filter /var/log/trafficserver/diags.log | tail -20
 ```
 
 ### 2.3 Monitoring: traffic_top, metriche, spazio disco
@@ -163,7 +163,7 @@ df -h
 du -sh /opt/trafficserver/
 
 # Spazio log
-du -sh /opt/trafficserver/var/trafficserver/log/
+du -sh /var/trafficserver/log/
 ```
 
 **RAM e CPU**:
@@ -595,7 +595,7 @@ sudo ss -tlnp | grep 8080
 curl -v -x http://127.0.0.1:8080 http://example.com 2>&1 | head -20
 
 # Passo 4: errori recenti nei log
-sudo tail -50 /opt/trafficserver/var/log/trafficserver/diags.log
+sudo tail -50 /var/log/trafficserver/diags.log
 ```
 
 **Soluzione**:
@@ -630,7 +630,7 @@ grep "^USER mar.rossi" /etc/ats-proxy/auth.conf
 # Se vuoto: utente non esiste
 
 # Passo 2: tentativi falliti nei log
-sudo grep 'AUTH FAIL' /opt/trafficserver/var/log/trafficserver/diags.log | tail -10
+sudo grep 'AUTH FAIL' /var/log/trafficserver/diags.log | tail -10
 # Cerca l'IP del client per risalire all'utente
 
 # Passo 3: qual e il modo attuale?
@@ -678,7 +678,7 @@ sudo ats-ctl status | grep MODE
 grep -i "dominio-segnalato" /etc/ats-proxy/whitelist.list
 
 # Passo 4: il plugin ha registrato un DENY?
-sudo grep 'DENY.*dominio' /opt/trafficserver/var/log/trafficserver/diags.log | tail -5
+sudo grep 'DENY.*dominio' /var/log/trafficserver/diags.log | tail -5
 ```
 
 **Soluzione**:
@@ -763,7 +763,7 @@ cat /opt/trafficserver/etc/trafficserver/plugin.config
 ls -la /opt/trafficserver/libexec/trafficserver/ats_proxy_filter*.so
 
 # Passo 3: errori di caricamento nei log
-sudo grep -i 'plugin\|ats_proxy' /opt/trafficserver/var/log/trafficserver/diags.log | tail -20
+sudo grep -i 'plugin\|ats_proxy' /var/log/trafficserver/diags.log | tail -20
 
 # Passo 4: modo corrente
 sudo ats-ctl status | grep MODE
@@ -800,7 +800,7 @@ df -h
 
 # Cosa occupa spazio?
 sudo du -sh /opt/trafficserver/var/
-sudo du -sh /opt/trafficserver/var/trafficserver/log/
+sudo du -sh /var/trafficserver/log/
 sudo du -sh /var/log/
 
 # File grandi
@@ -811,16 +811,16 @@ sudo find /opt/trafficserver -type f -size +100M -exec ls -lh {} \;
 
 ```bash
 # Pulire log vecchi
-sudo find /opt/trafficserver/var/trafficserver/log/ -name '*.log' -mtime +30 -delete
+sudo find /var/trafficserver/log/ -name '*.log' -mtime +30 -delete
 
 # Pulire cache ATS
 sudo systemctl stop trafficserver
-sudo rm -rf /opt/trafficserver/var/trafficserver/cache/*
+sudo rm -rf /var/trafficserver/cache/*
 sudo systemctl start trafficserver
 
 # Logrotate (se non configurato)
 cat <<'EOF' | sudo tee /etc/logrotate.d/ats-proxy
-/opt/trafficserver/var/log/trafficserver/*.log {
+/var/log/trafficserver/*.log {
     daily
     rotate 7
     compress
@@ -1036,10 +1036,10 @@ free -h | grep Mem
 
 # === 7. Security audit log ===
 # Errori e auth fallite nell'ultimo mese
-sudo grep -i 'error\|fail' /opt/trafficserver/var/log/trafficserver/diags.log \
+sudo grep -i 'error\|fail' /var/log/trafficserver/diags.log \
   | grep "$(date -d '30 days ago' +%Y%m%d)" | wc -l
-sudo grep 'AUTH FAIL' /opt/trafficserver/var/log/trafficserver/diags.log | wc -l
-sudo grep 'ADMIN bypass' /opt/trafficserver/var/log/trafficserver/diags.log | wc -l
+sudo grep 'AUTH FAIL' /var/log/trafficserver/diags.log | wc -l
+sudo grep 'ADMIN bypass' /var/log/trafficserver/diags.log | wc -l
 
 # === 8. Report diagnostico ===
 sudo bash scripts/ats-version-report.sh > ats-report-$(date +%Y%m%d).txt
@@ -1133,7 +1133,7 @@ sudo /opt/cve-check.sh 2>/dev/null || echo "CVE helper non installato"
 | Risorsa | Path |
 |---|---|
 | Config ATS | `/etc/trafficserver/` (o `/opt/trafficserver/etc/trafficserver/`) |
-| Log ATS | `/opt/trafficserver/var/log/trafficserver/` (o `/opt/trafficserver/var/log/trafficserver/`) |
+| Log ATS | `/var/log/trafficserver/` (o `/var/log/trafficserver/`) |
 | Config plugin | `/etc/ats-proxy/` |
 | Binari ATS | `/opt/trafficserver/bin/` |
 | Plugin `.so` | `/opt/trafficserver/libexec/trafficserver/ats_proxy_filter*.so` |

@@ -57,14 +57,14 @@ unit=$(systemctl cat trafficserver 2>/dev/null || true)
 if [ "$PROFILE" = "v3" ]; then
   expected_user='User=ats'
   expected_group='Group=ats'
-  expected_rw='ReadWritePaths=/opt/trafficserver/etc/trafficserver /opt/trafficserver/var/trafficserver /var/log/trafficserver'
+  expected_rw='ReadWritePaths=/opt/trafficserver/etc/trafficserver /var/trafficserver /var/log/trafficserver'
   records_file='/opt/trafficserver/etc/trafficserver/records.config'
   plugin_file='/opt/trafficserver/etc/trafficserver/plugin.config'
   filter_file='/etc/trafficserver/plugin/filter.conf'
 else
   expected_user='User=ats'
   expected_group='Group=ats'
-  expected_rw='ReadWritePaths=/etc/trafficserver /opt/trafficserver/var/trafficserver /var/log/trafficserver'
+  expected_rw='ReadWritePaths=/etc/trafficserver /var/trafficserver /var/log/trafficserver'
   records_file='/etc/trafficserver/records.config'
   plugin_file='/etc/trafficserver/plugin.config'
   filter_file='/etc/trafficserver/ats_proxy_filter.conf'
