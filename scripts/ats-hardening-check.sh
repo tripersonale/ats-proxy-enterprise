@@ -64,7 +64,7 @@ if [ "$PROFILE" = "v3" ]; then
 else
   expected_user='User=ats'
   expected_group='Group=ats'
-  expected_rw='ReadWritePaths=/etc/trafficserver /var/lib/trafficserver /var/log/trafficserver'
+  expected_rw='ReadWritePaths=/etc/trafficserver /opt/trafficserver/var/trafficserver /opt/trafficserver/var/log/trafficserver'
   records_file='/etc/trafficserver/records.config'
   plugin_file='/etc/trafficserver/plugin.config'
   filter_file='/etc/trafficserver/ats_proxy_filter.conf'

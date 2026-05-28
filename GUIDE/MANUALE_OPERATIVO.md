@@ -33,7 +33,7 @@ Binari: `/opt/trafficserver/bin/` (al posto di `/usr/bin/`)
 | `sudo ats-ctl reload` | Applica modifiche e riavvia ATS |
 | `sudo ats-ctl init` | Inizializza file config se mancanti |
 | `/opt/trafficserver/bin/traffic_top` | Metriche in tempo reale |
-| `sudo tail -f /opt/trafficserver/var/trafficserver/log/trafficserver/diags.log` | Segui log diagnostici |
+| `sudo tail -f /opt/trafficserver/var/log/trafficserver/diags.log` | Segui log diagnostici |
 | `sudo bash scripts/ats-mode-test.sh auth_nd 8080 admin '<password>'` | Test automatico policy |
 | `sudo ATS_HARDENING_PROFILE=v3 ATS_HARDENING_STAGE=full bash scripts/ats-hardening-check.sh 8080` | Verifica hardening |
 | `sudo bash scripts/ats-version-report.sh` | Report diagnostico completo |
@@ -96,34 +96,34 @@ curl -s -o /dev/null -w '%{http_code}\n' --connect-timeout 5 \
 | `squid.blog` | Log accessi in formato squid-compatibile |
 | `audit.log` | Richieste processate (audit trail) |
 
-Path canonico: `/opt/trafficserver/var/trafficserver/log/trafficserver/`
+Path canonico: `/opt/trafficserver/var/log/trafficserver/`
 (Se ATS compilato: `/opt/trafficserver/var/log/trafficserver/`)
 
 ```bash
 # Seguire log in tempo reale
-sudo tail -f /opt/trafficserver/var/trafficserver/log/trafficserver/diags.log
+sudo tail -f /opt/trafficserver/var/log/trafficserver/diags.log
 
 # Ultimi 20 errori
 sudo grep -i 'error\|fail\|alert' \
-  /opt/trafficserver/var/trafficserver/log/trafficserver/diags.log | tail -20
+  /opt/trafficserver/var/log/trafficserver/diags.log | tail -20
 
 # Tentativi di auth falliti
 sudo grep 'AUTH FAIL' \
-  /opt/trafficserver/var/trafficserver/log/trafficserver/diags.log | tail -20
+  /opt/trafficserver/var/log/trafficserver/diags.log | tail -20
 
 # Domini bloccati nelle ultime richieste
 sudo grep 'DENY' \
-  /opt/trafficserver/var/trafficserver/log/trafficserver/diags.log | tail -20
+  /opt/trafficserver/var/log/trafficserver/diags.log | tail -20
 
 # Chi ha usato il bypass admin
 sudo grep 'ADMIN bypass' \
-  /opt/trafficserver/var/trafficserver/log/trafficserver/diags.log | tail -10
+  /opt/trafficserver/var/log/trafficserver/diags.log | tail -10
 
 # Richieste processate (audit)
-sudo tail -50 /opt/trafficserver/var/trafficserver/log/trafficserver/audit.log
+sudo tail -50 /opt/trafficserver/var/log/trafficserver/audit.log
 
 # Ultima riga di log (check rapido che il servizio processi richieste)
-sudo tail -1 /opt/trafficserver/var/trafficserver/log/trafficserver/diags.log
+sudo tail -1 /opt/trafficserver/var/log/trafficserver/diags.log
 ```
 
 **Cosa cercare nei log**:
@@ -137,7 +137,7 @@ sudo tail -1 /opt/trafficserver/var/trafficserver/log/trafficserver/diags.log
 **Log del plugin specifico**:
 
 ```bash
-sudo grep ats_proxy_filter /opt/trafficserver/var/trafficserver/log/trafficserver/diags.log | tail -20
+sudo grep ats_proxy_filter /opt/trafficserver/var/log/trafficserver/diags.log | tail -20
 ```
 
 ### 2.3 Monitoring: traffic_top, metriche, spazio disco
@@ -207,8 +207,8 @@ sudo tail /var/log/ats-health.log
 |---|---|
 | `/etc/trafficserver/records.config` | Parametri runtime (porte, cache, timeout) |
 | `/etc/trafficserver/plugin.config` | Lista plugin caricati all'avvio |
-| `/opt/trafficserver/etc/trafficserver/ip_allow.yaml` | ACL IP sorgenti abilitati |
-| `/opt/trafficserver/etc/trafficserver/remap.config` | Mappature reverse proxy |
+| `/etc/trafficserver/ip_allow.yaml` | ACL IP sorgenti abilitati |
+| `/etc/trafficserver/remap.config` | Mappature reverse proxy |
 
 Se ATS e compilato in `/opt/trafficserver`, i path sono
 `/opt/trafficserver/etc/trafficserver/`.
@@ -236,8 +236,8 @@ Usare `ats-ctl init` e `ats-ctl reload`. Il plugin va dichiarato in
 # Config ATS: proprietario root:trafficserver, permessi 0640
 # Config plugin: proprietario root:trafficserver, permessi 0640
 # Directory plugin: 0750
-ls -la /etc/trafficserver/plugin/
-ls -la /opt/trafficserver/etc/trafficserver/
+ls -la /etc/ats-proxy/
+ls -la /etc/trafficserver/
 ```
 
 **Componenti ATS** (per riferimento):
@@ -306,7 +306,7 @@ sudo ats-ctl reload
 # Output atteso: [OK] restarted trafficserver
 
 # Vedere la lista corrente
-cat /etc/trafficserver/plugin/deny.list
+cat /etc/ats-proxy/deny.list
 ```
 
 **Test**:
@@ -334,7 +334,7 @@ sudo ats-ctl whitelist remove github.com
 sudo ats-ctl reload
 
 # Vedere la lista corrente
-cat /etc/trafficserver/plugin/whitelist.list
+cat /etc/ats-proxy/whitelist.list
 ```
 
 **Test in modo whitelist**:
@@ -373,7 +373,7 @@ sudo ats-ctl user remove mario.rossi
 sudo ats-ctl reload
 
 # Lista utenti (mostra solo nomi, non hash)
-grep '^USER ' /etc/trafficserver/plugin/auth.conf
+grep '^USER ' /etc/ats-proxy/auth.conf
 # Output esempio:
 # USER admin 3f8a2c1b$9d4e1f...
 # USER mario.rossi a1b2c3d4$7f6e5d...
@@ -416,7 +416,7 @@ sudo ats-ctl admin remove 192.168.89.10
 sudo ats-ctl reload
 
 # Lista corrente
-cat /etc/trafficserver/plugin/admin.list
+cat /etc/ats-proxy/admin.list
 ```
 
 ### 3.6 Cambio modalita
@@ -454,7 +454,7 @@ sudo ats-ctl status
 
 **Output esempio**:
 ```
-[STEP] Config dir: /etc/trafficserver/plugin
+[STEP] Config dir: /etc/ats-proxy
 MODE auth_nd
 deny: 12
 whitelist: 5
@@ -479,7 +479,7 @@ Non serve `reload` dopo `status`. Serve dopo: `mode`, `deny add/remove`,
 
 ### 3.9 File di configurazione
 
-**Directory**: `/etc/trafficserver/plugin/` (creata da `ats-ctl init`)
+**Directory**: `/etc/ats-proxy/` (creata da `ats-ctl init`)
 
 | File | Contenuto | Formato |
 |---|---|---|
@@ -493,21 +493,21 @@ Non serve `reload` dopo `status`. Serve dopo: `mode`, `deny add/remove`,
 
 ```bash
 # Directory
-drwxr-x--- 2 root trafficserver 4096 /etc/trafficserver/plugin/
+drwxr-x--- 2 root trafficserver 4096 /etc/ats-proxy/
 
 # File
--rw-r----- 1 root trafficserver 1234 /etc/trafficserver/plugin/filter.conf
--rw-r----- 1 root trafficserver  256 /etc/trafficserver/plugin/deny.list
--rw-r----- 1 root trafficserver  128 /etc/trafficserver/plugin/whitelist.list
--rw-r----- 1 root trafficserver   64 /etc/trafficserver/plugin/admin.list
--rw-r----- 1 root trafficserver  512 /etc/trafficserver/plugin/auth.conf
+-rw-r----- 1 root trafficserver 1234 /etc/ats-proxy/filter.conf
+-rw-r----- 1 root trafficserver  256 /etc/ats-proxy/deny.list
+-rw-r----- 1 root trafficserver  128 /etc/ats-proxy/whitelist.list
+-rw-r----- 1 root trafficserver   64 /etc/ats-proxy/admin.list
+-rw-r----- 1 root trafficserver  512 /etc/ats-proxy/auth.conf
 ```
 
 **Inizializzazione** (se i file mancano):
 
 ```bash
 sudo ats-ctl init
-# Output atteso: [OK] Config initialized in /etc/trafficserver/plugin
+# Output atteso: [OK] Config initialized in /etc/ats-proxy
 ```
 
 Copia i file `.example` da `config/` nella directory di installazione.
@@ -523,11 +523,11 @@ il codice di risposta atteso.
 
 ```bash
 # Sintassi
-sudo ATS_PROXY_CONFIG_DIR=/etc/trafficserver/plugin \
+sudo ATS_PROXY_CONFIG_DIR=/etc/ats-proxy \
   bash scripts/ats-mode-test.sh <modo> <porta> <utente> '<password>'
 
 # Esempio: test del modo auth_nd
-sudo ATS_PROXY_CONFIG_DIR=/etc/trafficserver/plugin \
+sudo ATS_PROXY_CONFIG_DIR=/etc/ats-proxy \
   bash scripts/ats-mode-test.sh auth_nd 8080 admin 'testpass'
 ```
 
@@ -595,7 +595,7 @@ sudo ss -tlnp | grep 8080
 curl -v -x http://127.0.0.1:8080 http://example.com 2>&1 | head -20
 
 # Passo 4: errori recenti nei log
-sudo tail -50 /opt/trafficserver/var/trafficserver/log/trafficserver/diags.log
+sudo tail -50 /opt/trafficserver/var/log/trafficserver/diags.log
 ```
 
 **Soluzione**:
@@ -626,11 +626,11 @@ ha inserito credenziali.
 
 ```bash
 # Passo 1: l'utente esiste?
-grep "^USER mar.rossi" /etc/trafficserver/plugin/auth.conf
+grep "^USER mar.rossi" /etc/ats-proxy/auth.conf
 # Se vuoto: utente non esiste
 
 # Passo 2: tentativi falliti nei log
-sudo grep 'AUTH FAIL' /opt/trafficserver/var/trafficserver/log/trafficserver/diags.log | tail -10
+sudo grep 'AUTH FAIL' /opt/trafficserver/var/log/trafficserver/diags.log | tail -10
 # Cerca l'IP del client per risalire all'utente
 
 # Passo 3: qual e il modo attuale?
@@ -669,16 +669,16 @@ essere accessibile.
 
 ```bash
 # Passo 1: il dominio e in deny?
-grep -i "dominio-segnalato" /etc/trafficserver/plugin/deny.list
+grep -i "dominio-segnalato" /etc/ats-proxy/deny.list
 
 # Passo 2: il modo e whitelist?
 sudo ats-ctl status | grep MODE
 
 # Passo 3: se whitelist, il dominio e nella lista?
-grep -i "dominio-segnalato" /etc/trafficserver/plugin/whitelist.list
+grep -i "dominio-segnalato" /etc/ats-proxy/whitelist.list
 
 # Passo 4: il plugin ha registrato un DENY?
-sudo grep 'DENY.*dominio' /opt/trafficserver/var/trafficserver/log/trafficserver/diags.log | tail -5
+sudo grep 'DENY.*dominio' /opt/trafficserver/var/log/trafficserver/diags.log | tail -5
 ```
 
 **Soluzione**:
@@ -756,14 +756,14 @@ sudo systemctl restart trafficserver
 
 ```bash
 # Passo 1: il plugin e in plugin.config?
-cat /etc/trafficserver/plugin.config
-# Deve contenere: ats_proxy_filter.so /etc/trafficserver/plugin/filter.conf
+cat /opt/trafficserver/etc/trafficserver/plugin.config
+# Deve contenere: ats_proxy_filter.so /etc/ats-proxy/filter.conf
 
 # Passo 2: il file .so esiste?
 ls -la /opt/trafficserver/libexec/trafficserver/ats_proxy_filter*.so
 
 # Passo 3: errori di caricamento nei log
-sudo grep -i 'plugin\|ats_proxy' /opt/trafficserver/var/trafficserver/log/trafficserver/diags.log | tail -20
+sudo grep -i 'plugin\|ats_proxy' /opt/trafficserver/var/log/trafficserver/diags.log | tail -20
 
 # Passo 4: modo corrente
 sudo ats-ctl status | grep MODE
@@ -774,8 +774,8 @@ sudo ats-ctl status | grep MODE
 
 ```bash
 # Aggiungere il plugin a plugin.config (se manca)
-echo 'ats_proxy_filter.so /etc/trafficserver/plugin/filter.conf' | \
-  sudo tee -a /etc/trafficserver/plugin.config
+echo 'ats_proxy_filter.so /etc/ats-proxy/filter.conf' | \
+  sudo tee -a /opt/trafficserver/etc/trafficserver/plugin.config
 
 # Verificare permessi
 sudo chmod 0755 /opt/trafficserver/libexec/trafficserver/ats_proxy_filter*.so
@@ -820,7 +820,7 @@ sudo systemctl start trafficserver
 
 # Logrotate (se non configurato)
 cat <<'EOF' | sudo tee /etc/logrotate.d/ats-proxy
-/opt/trafficserver/var/trafficserver/log/trafficserver/*.log {
+/opt/trafficserver/var/log/trafficserver/*.log {
     daily
     rotate 7
     compress
@@ -842,22 +842,22 @@ nei log.
 
 ```bash
 # Verifica permessi directory
-ls -la /etc/trafficserver/plugin/
-ls -la /opt/trafficserver/etc/trafficserver/
+ls -la /etc/ats-proxy/
+ls -la /etc/trafficserver/
 
 # Verifica proprietario e gruppo
-stat /etc/trafficserver/plugin/filter.conf
+stat /etc/ats-proxy/filter.conf
 ```
 
 **Soluzione**:
 
 ```bash
 # Ripristinare permessi corretti
-sudo chown -R root:trafficserver /etc/trafficserver/plugin/
-sudo chmod 0750 /etc/trafficserver/plugin/
-sudo chmod 0640 /etc/trafficserver/plugin/*
-sudo chown -R root:trafficserver /opt/trafficserver/etc/trafficserver/
-sudo chmod 0640 /opt/trafficserver/etc/trafficserver/*
+sudo chown -R root:trafficserver /etc/ats-proxy/
+sudo chmod 0750 /etc/ats-proxy/
+sudo chmod 0640 /etc/ats-proxy/*
+sudo chown -R root:trafficserver /etc/trafficserver/
+sudo chmod 0640 /etc/trafficserver/*
 
 # Reinizializzare se i file sono corrotti
 sudo ats-ctl init
@@ -951,13 +951,13 @@ Acquire::https::Proxy "http://192.168.89.37:8080";
 # Backup completo (config ATS + config plugin + unita systemd)
 sudo tar -czf ats-backup-$(date +%Y%m%d).tar.gz \
   /opt/trafficserver/etc \
-  /etc/trafficserver/plugin \
+  /etc/ats-proxy \
   /etc/systemd/system/trafficserver.service
 
 # Se ATS9 da pacchetto, includere anche:
 sudo tar -czf ats-backup-$(date +%Y%m%d).tar.gz \
   /etc/trafficserver \
-  /etc/trafficserver/plugin \
+  /etc/ats-proxy \
   /etc/systemd/system/trafficserver.service
 ```
 
@@ -973,7 +973,7 @@ scp ats-backup-$(date +%Y%m%d).tar.gz utente@backup-host:/backup/
 # Aggiungere a crontab
 sudo crontab -e
 # Inserire:
-# 0 3 * * * tar -czf /backup/ats-backup-$(date +\%Y\%m\%d).tar.gz /opt/trafficserver/etc /etc/trafficserver/plugin /etc/systemd/system/trafficserver.service
+# 0 3 * * * tar -czf /backup/ats-backup-$(date +\%Y\%m\%d).tar.gz /opt/trafficserver/etc /etc/ats-proxy /etc/systemd/system/trafficserver.service
 ```
 
 ### Restore
@@ -986,9 +986,9 @@ sudo systemctl stop trafficserver
 sudo tar -xzf ats-backup-YYYYMMDD.tar.gz -C /
 
 # Verificare permessi
-sudo chown -R root:trafficserver /etc/trafficserver/plugin/
-sudo chmod 0750 /etc/trafficserver/plugin/
-sudo chmod 0640 /etc/trafficserver/plugin/*
+sudo chown -R root:trafficserver /etc/ats-proxy/
+sudo chmod 0750 /etc/ats-proxy/
+sudo chmod 0640 /etc/ats-proxy/*
 
 # Riavviare
 sudo systemctl start trafficserver
@@ -1036,22 +1036,22 @@ free -h | grep Mem
 
 # === 7. Security audit log ===
 # Errori e auth fallite nell'ultimo mese
-sudo grep -i 'error\|fail' /opt/trafficserver/var/trafficserver/log/trafficserver/diags.log \
+sudo grep -i 'error\|fail' /opt/trafficserver/var/log/trafficserver/diags.log \
   | grep "$(date -d '30 days ago' +%Y%m%d)" | wc -l
-sudo grep 'AUTH FAIL' /opt/trafficserver/var/trafficserver/log/trafficserver/diags.log | wc -l
-sudo grep 'ADMIN bypass' /opt/trafficserver/var/trafficserver/log/trafficserver/diags.log | wc -l
+sudo grep 'AUTH FAIL' /opt/trafficserver/var/log/trafficserver/diags.log | wc -l
+sudo grep 'ADMIN bypass' /opt/trafficserver/var/log/trafficserver/diags.log | wc -l
 
 # === 8. Report diagnostico ===
 sudo bash scripts/ats-version-report.sh > ats-report-$(date +%Y%m%d).txt
 
 # === 9. Backup configurazione ===
 sudo tar -czf ats-backup-$(date +%Y%m%d).tar.gz \
-  /opt/trafficserver/etc /etc/trafficserver/plugin \
+  /opt/trafficserver/etc /etc/ats-proxy \
   /etc/systemd/system/trafficserver.service
 
 # === 10. Test policy per i modi in uso ===
 for mode in off deny auth_nd; do
-  sudo ATS_PROXY_CONFIG_DIR=/etc/trafficserver/plugin \
+  sudo ATS_PROXY_CONFIG_DIR=/etc/ats-proxy \
     bash scripts/ats-mode-test.sh "$mode" 8080 admin '<password>'
 done
 
@@ -1094,16 +1094,16 @@ sudo /opt/cve-check.sh 2>/dev/null || echo "CVE helper non installato"
 | `bash scripts/ats-hardening-check.sh <porta>` | Verifica hardening |
 | `bash scripts/ats-mode-test.sh <modo> <porta> <utente> <pass>` | Test automatico policy |
 | `bash scripts/ats-version-report.sh` | Report diagnostico completo |
-| `cat /etc/trafficserver/plugin/admin.list` | Mostra IP admin |
-| `cat /etc/trafficserver/plugin/auth.conf` | Mostra file auth (contiene hash) |
-| `cat /etc/trafficserver/plugin/deny.list` | Mostra domini bloccati |
-| `cat /etc/trafficserver/plugin/filter.conf` | Mostra config principale plugin |
-| `cat /etc/trafficserver/plugin/whitelist.list` | Mostra domini whitelist |
+| `cat /etc/ats-proxy/admin.list` | Mostra IP admin |
+| `cat /etc/ats-proxy/auth.conf` | Mostra file auth (contiene hash) |
+| `cat /etc/ats-proxy/deny.list` | Mostra domini bloccati |
+| `cat /etc/ats-proxy/filter.conf` | Mostra config principale plugin |
+| `cat /etc/ats-proxy/whitelist.list` | Mostra domini whitelist |
 | `curl -x http://127.0.0.1:8080 http://example.com -I` | Test rapido proxy |
 | `curl -x http://127.0.0.1:8080 --proxy-user u:p http://example.com -I` | Test proxy con auth |
 | `df -h` | Spazio disco |
 | `free -h` | RAM disponibile |
-| `grep '^USER ' /etc/trafficserver/plugin/auth.conf` | Lista utenti (solo nomi) |
+| `grep '^USER ' /etc/ats-proxy/auth.conf` | Lista utenti (solo nomi) |
 | `journalctl -u trafficserver -n 50 --no-pager` | Log systemd ultime 50 righe |
 | `man ats-ctl` | Man page di ats-ctl |
 | `man ats-proxy-filter` | Man page del plugin |
@@ -1132,9 +1132,9 @@ sudo /opt/cve-check.sh 2>/dev/null || echo "CVE helper non installato"
 
 | Risorsa | Path |
 |---|---|
-| Config ATS | `/opt/trafficserver/etc/trafficserver/` (o `/opt/trafficserver/etc/trafficserver/`) |
-| Log ATS | `/opt/trafficserver/var/trafficserver/log/trafficserver/` (o `/opt/trafficserver/var/log/trafficserver/`) |
-| Config plugin | `/etc/trafficserver/plugin/` |
+| Config ATS | `/etc/trafficserver/` (o `/opt/trafficserver/etc/trafficserver/`) |
+| Log ATS | `/opt/trafficserver/var/log/trafficserver/` (o `/opt/trafficserver/var/log/trafficserver/`) |
+| Config plugin | `/etc/ats-proxy/` |
 | Binari ATS | `/opt/trafficserver/bin/` |
 | Plugin `.so` | `/opt/trafficserver/libexec/trafficserver/ats_proxy_filter*.so` |
 | Unita systemd | `/etc/systemd/system/trafficserver.service` |
@@ -1182,7 +1182,7 @@ sudo systemctl restart trafficserver
 
 # Testa ogni modo usato
 for mode in off deny auth_nd; do
-  sudo ATS_PROXY_CONFIG_DIR=/etc/trafficserver/plugin \
+  sudo ATS_PROXY_CONFIG_DIR=/etc/ats-proxy \
     bash scripts/ats-mode-test.sh "$mode" 8080 admin '<password>'
 done
 

@@ -53,7 +53,7 @@ sudo systemctl stop trafficserver
 sudo cp -a /opt/trafficserver /opt/trafficserver.bak-$(date +%Y%m%d)
 
 # Backup config plugin
-sudo cp -a /etc/trafficserver/plugin /etc/trafficserver/plugin.bak-$(date +%Y%m%d)
+sudo cp -a /etc/ats-proxy /etc/ats-proxy.bak-$(date +%Y%m%d)
 
 # Salva il plugin corrente
 cp /opt/trafficserver/libexec/trafficserver/ats_proxy_filter_v30.so \
@@ -175,7 +175,7 @@ Sezione 4.
 ```bash
 # Testa tutti i mode
 for mode in off deny whitelist auth_all auth_nd; do
-  sudo ATS_PROXY_CONFIG_DIR=/etc/trafficserver/plugin \
+  sudo ATS_PROXY_CONFIG_DIR=/etc/ats-proxy \
     ATS_PROXY_TEMPLATE_DIR=/home/ubuntu/ats-proxy/config \
     bash scripts/ats-mode-test.sh "$mode" 8080 admin testpass
 done
@@ -265,7 +265,7 @@ sudo cp bin/ats_proxy_filter_v30.so \
 
 # Registra in plugin.config (se non gia presente)
 echo ats_proxy_filter_v30.so | sudo tee \
-  /etc/trafficserver/plugin.config > /dev/null
+  /opt/trafficserver/etc/trafficserver/plugin.config > /dev/null
 
 # Riavvia ATS
 sudo /opt/trafficserver/bin/trafficserver restart
@@ -273,7 +273,7 @@ sleep 4
 ```
 
 > **Nota**: su ATS 10, `plugin.config` si trova in
-> `/etc/trafficserver/plugin.config` (uguale a ATS 9).
+> `/opt/trafficserver/etc/trafficserver/plugin.config` (uguale a ATS 9).
 
 ### 4.3 Test post-ricompilazione
 
@@ -285,7 +285,7 @@ sudo grep "ats_proxy_filter_v30.*plugin loaded" \
 # Testa tutti i mode
 for mode in off deny whitelist auth_all auth_nd; do
   echo "=== $mode ==="
-  sudo ATS_PROXY_CONFIG_DIR=/etc/trafficserver/plugin \
+  sudo ATS_PROXY_CONFIG_DIR=/etc/ats-proxy \
     ATS_PROXY_TEMPLATE_DIR=$(pwd)/config \
     bash scripts/ats-mode-test.sh "$mode" 8080 admin testpass
 done
