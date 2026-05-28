@@ -1,0 +1,96 @@
+.\" Man page for ats-ctl — ATS Proxy Enterprise v3.0
+.TH ATS-CTL 1 "2026-05-28" "3.0-beta" "ATS Proxy Enterprise"
+.SH NAME
+ats-ctl \- manage ATS Proxy Enterprise v3.0 policy
+.SH SYNOPSIS
+.B ats-ctl
+.I command
+.RI [ arguments... ]
+.SH DESCRIPTION
+.B ats-ctl
+is the command-line tool for managing the ATS Proxy Enterprise plugin
+configuration without editing files by hand. It reads and writes policy
+files under
+.I /etc/ats-proxy/
+and reloads the Apache Traffic Server service after changes.
+.SH COMMANDS
+.SS init
+Initialize configuration files from templates. Safe to run multiple times:
+existing files are not overwritten.
+.SS mode off|deny|whitelist|auth_all|auth_nd
+Set the plugin operating mode.
+.TP
+.B off
+Plugin loaded but transparent: all requests pass.
+.TP
+.B deny
+Only domains in the deny list are blocked. Everything else passes without authentication.
+.TP
+.B whitelist
+Only domains in the whitelist are allowed. Everything else receives 403 Forbidden.
+.TP
+.B auth_all
+Authentication required for all requests (except admin IPs). Valid credentials
+override deny and whitelist rules.
+.TP
+.B auth_nd
+Deny blocks before authentication; whitelist bypasses authentication;
+all other domains require valid credentials.
+.SS deny add|remove <domain>
+Add or remove a domain from the deny list. Supports exact matches
+.RI ( bad.com )
+and suffix patterns
+.RI ( ".*\e\e.ru$" ).
+.SS whitelist add|remove <domain>
+Add or remove a domain from the whitelist. Whitelisted domains bypass
+authentication in all modes except
+.BR auth_all .
+.SS admin add|remove <ip>
+Add or remove an IP address from the admin bypass list. Admin IPs are not
+subject to deny, whitelist, or authentication rules.
+.SS user add <name> [password]
+Add a user. If password is omitted, it is prompted silently.
+Passwords are stored as
+.IR salt $sha256(salt+password) .
+.SS user remove <name>
+Remove a user.
+.SS status
+Print current mode, deny count, whitelist count, admin count, and user count.
+.SS reload
+Restart the ATS service to apply configuration changes.
+.SH FILES
+.TP
+.I /etc/ats-proxy/filter.conf
+Main configuration: mode and INCLUDE directives.
+.TP
+.I /etc/ats-proxy/deny.list
+Blocked domains (one per line).
+.TP
+.I /etc/ats-proxy/whitelist.list
+Allowed domains (one per line).
+.TP
+.I /etc/ats-proxy/admin.list
+Admin IP addresses (one per line).
+.TP
+.I /etc/ats-proxy/auth.conf
+Users with salted SHA-256 password hashes.
+.SH ENVIRONMENT
+.TP
+.B ATS_PROXY_CONFIG_DIR
+Override configuration directory (default:
+.IR /etc/ats-proxy ).
+.TP
+.B ATS_PROXY_TEMPLATE_DIR
+Override template directory used by
+.B init
+(default:
+.IR <repo>/config ).
+.TP
+.B ATS_TRAFFICSERVER_CTL
+Override path to trafficserver binary used by
+.B reload
+(default:
+.IR /opt/trafficserver/bin/trafficserver ).
+.SH SEE ALSO
+.BR ats-proxy-filter (7),
+.BR trafficserver (8)

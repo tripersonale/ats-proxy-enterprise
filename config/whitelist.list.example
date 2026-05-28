@@ -1,0 +1,16 @@
+# ATS Proxy Enterprise v3.0 - whitelist
+#
+# Copiare in: /etc/ats-proxy/whitelist.list
+# Una voce per riga. La forma breve e valida:
+#   github.com
+# Oppure la forma esplicita:
+#   WHITELIST github.com
+#
+# In MODE whitelist: solo questi host passano.
+# In MODE auth_nd: questi host passano senza auth.
+# In MODE auth_all: la whitelist non bypassa auth.
+#
+# Esempi commentati:
+# github.com
+# ubuntu.com
+# google.com

@@ -1,0 +1,125 @@
+.\" Man page for ats-proxy-filter — ATS Proxy Enterprise v3.0
+.TH ATS-PROXY-FILTER 7 "2026-05-28" "3.0-beta" "ATS Proxy Enterprise"
+.SH NAME
+ats-proxy-filter \- URL filtering and authentication plugin for Apache Traffic Server
+.SH DESCRIPTION
+.B ats-proxy-filter
+is a shared object plugin for Apache Traffic Server that provides URL filtering
+and HTTP Basic Authentication for forward proxy deployments.
+
+The plugin hooks into
+.B TS_HTTP_OS_DNS_HOOK
+and inspects the
+.B Host
+header of every client request. Based on the configured mode and policy files,
+it either forwards the request, returns
+.B 403 Forbidden
+(domain denied or not in whitelist), or returns
+.B 407 Proxy Authentication Required
+(client must provide valid credentials).
+.SH MODES
+The plugin supports five operating modes, set via
+.B MODE
+in
+.IR /etc/ats-proxy/filter.conf .
+.TP
+.B off
+Plugin is loaded but transparent. All requests pass through unchanged.
+Useful for debugging and quick rollback without editing plugin.config.
+.TP
+.B deny
+Only domains listed in
+.I deny.list
+are blocked with
+.BR 403 .
+All other domains pass without authentication. No user credentials needed.
+.TP
+.B whitelist
+Only domains listed in
+.I whitelist.list
+are allowed. All other domains receive
+.BR 403 .
+No authentication needed.
+.TP
+.B auth_all
+Authentication is required for every request. Valid credentials override
+deny and whitelist rules. IPs in
+.I admin.list
+bypass all checks.
+.TP
+.B auth_nd
+Deny rules are evaluated first: denied domains always receive
+.B 403
+even with valid credentials. Whitelisted domains pass without authentication.
+All other domains require valid credentials.
+.SH DECISION ORDER
+For each request, the plugin checks in this order:
+.IP 1.
+Admin IP? \fBPass\fR (bypass everything).
+.IP 2.
+Denied domain? \fB403 Forbidden\fR (always, in all modes except off).
+.IP 3.
+Whitelisted domain? \fBPass\fR (no auth in deny/whitelist/auth_nd; auth required in auth_all).
+.IP 4.
+Valid credentials? \fBPass\fR.
+.IP 5.
+No valid credentials? \fB407 Proxy Authentication Required\fR.
+.SH AUTHENTICATION
+The plugin implements HTTP Basic Authentication (RFC 7617). Passwords are
+never stored in plain text. The configuration file stores
+.IR salt $sha256(salt+password) .
+The plugin uses constant-time comparison to prevent timing attacks.
+
+Use
+.B ats-ctl user add
+to generate entries. Do not write hashes by hand.
+.SH FILES
+.TP
+.I /etc/ats-proxy/filter.conf
+Main configuration. Contains
+.B MODE
+and
+.B INCLUDE
+directives pointing to the list files below.
+.TP
+.I /etc/ats-proxy/deny.list
+Blocked domain patterns. Supports exact match
+.RI ( bad.com )
+and suffix match with
+.B .*
+prefix
+.RI ( ".*\e\e.ru$" ).
+.TP
+.I /etc/ats-proxy/whitelist.list
+Allowed domain patterns. Same syntax as deny.list.
+.TP
+.I /etc/ats-proxy/admin.list
+IP addresses that bypass all filtering and authentication.
+.TP
+.I /etc/ats-proxy/auth.conf
+User entries in the format
+.IR "USER <name> <salt>$<sha256>" .
+.SH BUILD
+The plugin source is
+.IR src/ats_proxy_filter_v30.c .
+It compiles as C for ATS 9.x and as C++17 for ATS 10.x. Use
+.B scripts/compile-plugin.sh
+with
+.B --c
+or
+.B --cxx
+flag.
+.SH SECURITY
+.IP \(bu
+Passwords at rest: salted SHA-256, not plain text.
+.IP \(bu
+Password comparison: constant-time, resistant to timing attacks.
+.IP \(bu
+Transport: HTTP Basic Auth over cleartext HTTP exposes credentials on the wire.
+Use TLS (port 8443) or a trusted internal network.
+.IP \(bu
+No dynamic memory allocation in the hot path: fixed-size static arrays.
+.SH SEE ALSO
+.BR ats-ctl (1),
+.BR trafficserver (8),
+.BR traffic_ctl (8)

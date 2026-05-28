@@ -1,0 +1,16 @@
+# ATS Proxy Enterprise v3.0 - deny list
+#
+# Copiare in: /etc/ats-proxy/deny.list
+# Una voce per riga. La forma breve e valida:
+#   bad.com
+# Oppure la forma esplicita:
+#   DENY bad.com
+#
+# Pattern supportati:
+#   dominio esatto: bad.com
+#   suffisso/substring con prefisso .*: .*\.ru$
+#
+# Esempi commentati:
+# malware.test
+# tracking.example
+# .*\.ru$
