@@ -29,14 +29,14 @@ sudo systemctl restart trafficserver
 ## Log
 
 ```bash
-sudo tail -f /opt/trafficserver/var/log/trafficserver/diags.log
-sudo tail -f /opt/trafficserver/var/log/trafficserver/squid.blog
+sudo tail -f /var/log/trafficserver/diags.log
+sudo tail -f /var/log/trafficserver/squid.blog
 ```
 
 ## Debug plugin
 
 ```bash
-sudo grep ats_proxy_filter /opt/trafficserver/var/log/trafficserver/diags.log
+sudo grep ats_proxy_filter /var/log/trafficserver/diags.log
 sudo bash scripts/ats-version-report.sh
 ```
 

@@ -11,11 +11,12 @@ id "$ATS_USER" >/dev/null || useradd --system --gid "$ATS_GROUP" \
   --home-dir "${ATS_PREFIX}/var/trafficserver" --shell /usr/sbin/nologin "$ATS_USER"
 
 # Permissions
+# make install with --localstatedir=/var creates /var/log/trafficserver/ and /var/trafficserver/
 chown -R root:root "${ATS_PREFIX}"
 install -d -o "$ATS_USER" -g "$ATS_GROUP" -m 0750 \
-  "${ATS_PREFIX}/var/trafficserver" "${ATS_PREFIX}/var/log/trafficserver"
+  "${ATS_PREFIX}/var/trafficserver" /var/log/trafficserver /var/trafficserver
 chown -R "$ATS_USER:$ATS_GROUP" \
-  "${ATS_PREFIX}/var/trafficserver" "${ATS_PREFIX}/var/log/trafficserver"
+  "${ATS_PREFIX}/var/trafficserver" /var/log/trafficserver /var/trafficserver
 chgrp -R "$ATS_GROUP" "${ATS_PREFIX}/etc/trafficserver" 2>/dev/null || true
 chmod 0640 "${ATS_PREFIX}/etc/trafficserver"/* 2>/dev/null || true
 

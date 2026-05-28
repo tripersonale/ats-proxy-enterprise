@@ -370,7 +370,7 @@ compile_ats() {
   log "Configuring ATS..."
   autoreconf -if -q 2>/dev/null || true
 
-  local configure_opts="--prefix=/opt/trafficserver --sysconfdir=/etc/trafficserver --localstatedir=/opt/trafficserver/var/trafficserver --runstatedir=/run/trafficserver --with-user=ats --with-group=ats --disable-tests --disable-examples --disable-maintainer-mode"
+  local configure_opts="--prefix=/opt/trafficserver --sysconfdir=/etc/trafficserver --localstatedir=/var --runstatedir=/run/trafficserver --with-user=ats --with-group=ats --disable-tests --disable-examples --disable-maintainer-mode"
 
   if [ "$OS" = "2404" ]; then
     ./configure $configure_opts --enable-pcre -q
@@ -393,10 +393,11 @@ compile_ats() {
 # ============================================================================
 configure_ats() {
   log "Creating directories..."
-  sudo mkdir -p /run/trafficserver /opt/trafficserver/var/log/trafficserver /opt/trafficserver/var/trafficserver/cache
-  sudo mkdir -p /opt/trafficserver/var/trafficserver/log/trafficserver
-  sudo chown -R ats:ats /opt/trafficserver /etc/trafficserver /opt/trafficserver/var/trafficserver
-  sudo chown ats:ats /run/trafficserver /opt/trafficserver/var/log/trafficserver
+  # make install already creates /var/log/trafficserver/ and /var/trafficserver/
+  # via --localstatedir=/var. Create only paths outside localstatedir:
+  sudo mkdir -p /run/trafficserver /opt/trafficserver/var/trafficserver/cache
+  sudo chown -R ats:ats /opt/trafficserver /etc/trafficserver /var/log/trafficserver /var/trafficserver
+  sudo chown ats:ats /run/trafficserver
 
   log "Writing records.config..."
   sudo tee /etc/trafficserver/records.config > /dev/null << EOF
@@ -561,7 +562,7 @@ StandardError=journal
 SyslogIdentifier=trafficserver
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/etc/trafficserver /opt/trafficserver/var/trafficserver /opt/trafficserver/var/log/trafficserver
+ReadWritePaths=/etc/trafficserver /opt/trafficserver/var/trafficserver /var/log/trafficserver /var/trafficserver
 ReadOnlyPaths=/opt/trafficserver
 PrivateTmp=true
 PrivateDevices=true
@@ -623,7 +624,7 @@ bantime = 86400
 enabled = true
 port = ${PROXY_PORT}
 filter = ats-proxy
-logpath = /opt/trafficserver/var/log/trafficserver/diags.log
+logpath = /var/log/trafficserver/diags.log
 maxretry = 5
 findtime = 300
 bantime = 3600
@@ -779,7 +780,7 @@ main() {
   log "Installation complete!"
   log "Proxy:  http://${IP%/*}:${PROXY_PORT}"
   log "Config: /etc/trafficserver/ats_proxy_filter.conf"
-  log "Logs:   /opt/trafficserver/var/log/trafficserver/audit.log"
+  log "Logs:   /var/log/trafficserver/audit.log"
   log "Health: /var/log/ats-health.log"
   echo "============================================"
 }

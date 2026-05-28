@@ -24,7 +24,7 @@ sudo systemctl enable trafficserver
 sudo journalctl -u trafficserver -f
 
 # Log in tempo reale (audit)
-sudo tail -f /opt/trafficserver/var/log/trafficserver/audit.log
+sudo tail -f /var/log/trafficserver/audit.log
 
 # Verifica che la porta sia in ascolto
 sudo ss -tlnp | grep 8080
@@ -195,16 +195,16 @@ Con 10000 MB e rotazione attiva, i file più vecchi vengono cancellati automatic
 
 ```bash
 # Ultime 10 righe
-sudo tail -10 /opt/trafficserver/var/log/trafficserver/audit.log
+sudo tail -10 /var/log/trafficserver/audit.log
 
 # Cercare un IP specifico
-sudo grep "192.168.89.55" /opt/trafficserver/var/log/trafficserver/audit.log
+sudo grep "192.168.89.55" /var/log/trafficserver/audit.log
 
 # Cercare 403 (accessi negati)
-sudo grep " 403 " /opt/trafficserver/var/log/trafficserver/audit.log
+sudo grep " 403 " /var/log/trafficserver/audit.log
 
 # Contare richieste per FQDN
-sudo cut -d' ' -f8 /opt/trafficserver/var/log/trafficserver/audit.log | sort | uniq -c | sort -rn
+sudo cut -d' ' -f8 /var/log/trafficserver/audit.log | sort | uniq -c | sort -rn
 ```
 
 ### 4.6 Forwarding a SIEM (rsyslog / Filebeat / JSON)
@@ -212,7 +212,7 @@ sudo cut -d' ' -f8 /opt/trafficserver/var/log/trafficserver/audit.log | sort | u
 ATS scrive `audit.log` su disco. Per centralizzare i log:
 
 ```
-/opt/trafficserver/var/log/trafficserver/audit.log
+/var/log/trafficserver/audit.log
     │
     ├──▶ rsyslog (imfile) ──▶ SIEM via TCP/UDP syslog (qualsiasi)
     ├──▶ Filebeat ──▶ Logstash ──▶ Elasticsearch ──▶ Kibana (ELK)
@@ -236,18 +236,18 @@ ATS scrive `audit.log` su disco. Per centralizzare i log:
 
 ```bash
 # Permessi: rendi audit.log leggibile da syslog
-sudo chmod o+r /opt/trafficserver/var/log/trafficserver/audit.log
+sudo chmod o+r /var/log/trafficserver/audit.log
 
 # OPPURE aggiungi syslog al gruppo ats
 sudo usermod -a -G ats syslog
-sudo chmod g+r /opt/trafficserver/var/log/trafficserver/audit.log
+sudo chmod g+r /var/log/trafficserver/audit.log
 
 # Configura rsyslog
 sudo tee /etc/rsyslog.d/99-ats-audit.conf > /dev/null << 'EOF'
 module(load="imfile")
 
 input(type="imfile"
-      File="/opt/trafficserver/var/log/trafficserver/audit.log"
+      File="/var/log/trafficserver/audit.log"
       Tag="ats-audit"
       Facility="local0"
       Severity="info"
@@ -274,7 +274,7 @@ filebeat.inputs:
   - type: filestream
     enabled: true
     paths:
-      - /opt/trafficserver/var/log/trafficserver/audit.log
+      - /var/log/trafficserver/audit.log
     fields:
       log_type: ats-audit
     fields_under_root: false
@@ -416,7 +416,7 @@ sudo journalctl -u trafficserver --since "1 hour ago"
 sudo journalctl -u trafficserver -p warning
 
 # Diags log (interno ATS)
-sudo tail -50 /opt/trafficserver/var/log/trafficserver/diags.log
+sudo tail -50 /var/log/trafficserver/diags.log
 ```
 
 ### 6.4 Health check automatico
@@ -571,7 +571,7 @@ autoreconf -if
 # 24.04:
 ./configure \
   --prefix=/opt/trafficserver --sysconfdir=/etc/trafficserver \
-  --localstatedir=/opt/trafficserver/var/trafficserver --runstatedir=/run/trafficserver \
+  --localstatedir=/var --runstatedir=/run/trafficserver \
   --with-user=ats --with-group=ats --enable-pcre \
   --disable-tests --disable-examples --disable-maintainer-mode
 
@@ -579,7 +579,7 @@ autoreconf -if
 export PKG_CONFIG_PATH='/usr/local/pcre/lib/pkgconfig'
 ./configure \
   --prefix=/opt/trafficserver --sysconfdir=/etc/trafficserver \
-  --localstatedir=/opt/trafficserver/var/trafficserver --runstatedir=/run/trafficserver \
+  --localstatedir=/var --runstatedir=/run/trafficserver \
   --with-user=ats --with-group=ats --with-pcre=/usr/local/pcre \
   --disable-tests --disable-examples --disable-maintainer-mode
 
@@ -622,7 +622,7 @@ curl -s -o /dev/null -w '%{http_code}' -x http://localhost:8080 https://httpbin.
 for i in $(seq 1 10); do curl -s -o /dev/null -w '%{http_code} ' -x http://localhost:8080 http://httpbin.org/ip & done; wait; echo ''
 
 # 5. Verifica log
-sudo tail -3 /opt/trafficserver/var/log/trafficserver/audit.log
+sudo tail -3 /var/log/trafficserver/audit.log
 
 # 6. Verifica ACL (ripetere batteria test ACL)
 
@@ -630,7 +630,7 @@ sudo tail -3 /opt/trafficserver/var/log/trafficserver/audit.log
 sudo /opt/trafficserver/bin/traffic_ctl metric get proxy.process.http.incoming_requests
 
 # 8. Verificare eventuali warning nei log
-sudo grep -i "warn\|error\|fail" /opt/trafficserver/var/log/trafficserver/diags.log | tail -20
+sudo grep -i "warn\|error\|fail" /var/log/trafficserver/diags.log | tail -20
 ```
 
 **Backuppare sempre `/etc/trafficserver/` prima dell'upgrade** — alcuni default potrebbero cambiare.
@@ -906,9 +906,9 @@ Passed: 9  Failed: 0
 
 ```bash
 sudo systemctl stop trafficserver
-sudo rm -f /opt/trafficserver/var/trafficserver/manager.lock
-sudo rm -f /opt/trafficserver/var/trafficserver/server.lock
-sudo rm -f /opt/trafficserver/var/trafficserver/*.sock
+sudo rm -f /var/trafficserver/manager.lock
+sudo rm -f /var/trafficserver/server.lock
+sudo rm -f /var/trafficserver/*.sock
 sudo systemctl start trafficserver
 ```
 
@@ -931,14 +931,13 @@ grep url_remap /etc/trafficserver/records.config
 
 ```bash
 # Verificare che la directory esista
-sudo mkdir -p /opt/trafficserver/var/trafficserver/log/trafficserver
-sudo chown ats:ats /opt/trafficserver/var/trafficserver/log/trafficserver
+sudo mkdir -p /var/log/trafficserver && sudo chown -R ats:ats /var/log/trafficserver /var/trafficserver
 
 # Riavviare
 sudo systemctl restart trafficserver
 
 # Controllare errori
-sudo grep -i "log\|error" /opt/trafficserver/var/log/trafficserver/diags.log | tail -10
+sudo grep -i "log\|error" /var/log/trafficserver/diags.log | tail -10
 ```
 
 ### 15.5 Deny non funziona (IP bloccato naviga ancora)
@@ -969,8 +968,8 @@ sudo journalctl -u trafficserver -n 30
 
 ```bash
 sudo pkill -9 traffic_server traffic_manager
-sudo rm -f /opt/trafficserver/var/trafficserver/manager.lock
-sudo rm -f /opt/trafficserver/var/trafficserver/server.lock
+sudo rm -f /var/trafficserver/manager.lock
+sudo rm -f /var/trafficserver/server.lock
 sudo systemctl start trafficserver
 ```
 
@@ -1006,7 +1005,7 @@ sudo systemctl restart trafficserver
 ### 15.11 Deny dominio non funziona, restituisce 200 invece di 403
 
 **Cause possibili**:
-1. Plugin non caricato → `sudo grep 'ats_proxy_filter' /opt/trafficserver/var/log/trafficserver/diags.log | tail -5`
+1. Plugin non caricato → `sudo grep 'ats_proxy_filter' /var/log/trafficserver/diags.log | tail -5`
 2. Config file non leggibile da `ats` → `sudo -u ats cat /etc/trafficserver/plugin.config`
 3. OS_DNS hook non scatta (DNS cached) → testare con dominio mai visitato
 4. Admin IP bypass attivo per l'IP del client
@@ -1014,10 +1013,10 @@ sudo systemctl restart trafficserver
 ```bash
 # Soluzione:
 # 1. Verifica plugin caricato
-sudo grep 'ats_proxy_filter' /opt/trafficserver/var/log/trafficserver/diags.log | tail -5
+sudo grep 'ats_proxy_filter' /var/log/trafficserver/diags.log | tail -5
 
 # 2. Elimina cache DNS
-sudo rm -f /opt/trafficserver/var/trafficserver/host.db
+sudo rm -f /var/trafficserver/host.db
 sudo systemctl restart trafficserver
 
 # 3. Test da IP non-admin
@@ -1097,7 +1096,7 @@ echo 'CONFIG proxy.config.diags.debug.tags STRING http|dns|hostdb' | sudo tee -a
 sudo systemctl restart trafficserver
 
 # 4. Monitorare output
-sudo tail -f /opt/trafficserver/var/log/trafficserver/diags.log
+sudo tail -f /var/log/trafficserver/diags.log
 sudo journalctl -u trafficserver -f
 ```
 
@@ -1169,7 +1168,7 @@ echo "Periodo: ultimi 6 mesi" >> "$OUTPUT"
 echo "" >> "$OUTPUT"
 echo "=== LOG ACCESSO PROXY ===" >> "$OUTPUT"
 
-sudo grep "^$IP " /opt/trafficserver/var/log/trafficserver/audit.log* >> "$OUTPUT" 2>/dev/null
+sudo grep "^$IP " /var/log/trafficserver/audit.log* >> "$OUTPUT" 2>/dev/null
 
 echo "" >> "$OUTPUT"
 echo "=== FINE RAPPORTO ===" >> "$OUTPUT"
@@ -1186,7 +1185,7 @@ cat "$OUTPUT"
 # Uso: sudo bash gdpr-delete.sh 192.168.89.55
 
 IP="$1"
-LOGDIR="/opt/trafficserver/var/trafficserver/log/trafficserver"
+LOGDIR="/var/log/trafficserver"
 BACKUP="/root/gdpr-delete-backup-$(date +%Y%m%d-%H%M).tar.gz"
 
 echo "=== CANCELLAZIONE DATI PERSONALI ==="
@@ -1250,16 +1249,16 @@ Per ridurre il rischio GDPR, valutare l'anonimizzazione degli IP nei log prima d
 ```bash
 # === FASE 1: DETECTION ===
 # Identificare l'anomalia
-sudo tail -100 /opt/trafficserver/var/log/trafficserver/audit.log | grep -c " 403 "
+sudo tail -100 /var/log/trafficserver/audit.log | grep -c " 403 "
 sudo journalctl -u trafficserver -p err --since "1 hour ago"
 sudo /opt/trafficserver/bin/traffic_ctl metric get proxy.process.http.incoming_requests
 
 # === FASE 2: ANALYSIS ===
 # Determinare IP malevolo
-sudo grep " 403 " /opt/trafficserver/var/log/trafficserver/audit.log | cut -d' ' -f1 | sort | uniq -c | sort -rn | head -20
+sudo grep " 403 " /var/log/trafficserver/audit.log | cut -d' ' -f1 | sort | uniq -c | sort -rn | head -20
 
 # Identificare pattern (es. brute force, scan)
-sudo grep "192.168.89.99" /opt/trafficserver/var/log/trafficserver/audit.log | cut -d' ' -f6 | sort | uniq -c | sort -rn
+sudo grep "192.168.89.99" /var/log/trafficserver/audit.log | cut -d' ' -f6 | sort | uniq -c | sort -rn
 
 # === FASE 3: CONTAINMENT ===
 # Blocco immediato IP malevolo
@@ -1274,7 +1273,7 @@ sudo ufw deny from 192.168.89.99 to any port 8080 proto tcp
 # === FASE 4: EVIDENCE PRESERVATION ===
 # Backup immediato log e config
 sudo tar czf /root/incident-$(date +%Y%m%d-%H%M).tar.gz \
-  /opt/trafficserver/var/log/trafficserver/ \
+  /var/log/trafficserver/ \
   /etc/trafficserver/ \
   /var/log/auth.log
 ```
@@ -1376,10 +1375,10 @@ curl -s -o /dev/null -w "Proxy test: %{http_code}\n" -x http://localhost:8080 ht
 
 ```bash
 # Plugin caricato?
-sudo grep 'loaded [0-9]' /opt/trafficserver/var/log/trafficserver/diags.log | tail -3
+sudo grep 'loaded [0-9]' /var/log/trafficserver/diags.log | tail -3
 
 # Errori recenti
-sudo grep -i 'error\|fail\|alert' /opt/trafficserver/var/log/trafficserver/diags.log | tail -10
+sudo grep -i 'error\|fail\|alert' /var/log/trafficserver/diags.log | tail -10
 
 # Config valida?
 sudo /opt/trafficserver/bin/traffic_server -C verify_config
@@ -1394,7 +1393,7 @@ sudo ss -tlnp | grep traffic
 ps aux | grep traffic
 
 # Ultime richieste loggate?
-sudo tail -5 /opt/trafficserver/var/log/trafficserver/audit.log
+sudo tail -5 /var/log/trafficserver/audit.log
 
 # Metriche in tempo reale?
 /opt/trafficserver/bin/traffic_top

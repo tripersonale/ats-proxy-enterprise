@@ -65,8 +65,8 @@ curl -s -o /dev/null -w '%{http_code}\n' --connect-timeout 5 -x http://localhost
 **Come provocarlo**:
 ```bash
 sudo systemctl stop trafficserver
-sudo touch /opt/trafficserver/var/trafficserver/manager.lock
-sudo touch /opt/trafficserver/var/trafficserver/server.lock
+sudo touch /var/trafficserver/manager.lock
+sudo touch /var/trafficserver/server.lock
 sudo systemctl start trafficserver
 ```
 
@@ -77,9 +77,9 @@ sudo systemctl start trafficserver
 **Ripristino**:
 ```bash
 sudo systemctl stop trafficserver
-sudo rm -f /opt/trafficserver/var/trafficserver/manager.lock
-sudo rm -f /opt/trafficserver/var/trafficserver/server.lock
-sudo rm -f /opt/trafficserver/var/trafficserver/*.sock
+sudo rm -f /var/trafficserver/manager.lock
+sudo rm -f /var/trafficserver/server.lock
+sudo rm -f /var/trafficserver/*.sock
 sudo systemctl start trafficserver
 ```
 
@@ -99,7 +99,7 @@ sudo systemctl start trafficserver
 **Verifica spazio**:
 ```bash
 df -h /opt/trafficserver/var/trafficserver/cache
-df -h /opt/trafficserver/var/trafficserver/log
+df -h /var/log/trafficserver
 ```
 
 **Mitigazione**: Configurare monitoring su spazio disco (>80% = alert).

@@ -109,7 +109,7 @@ if [ ! -f "${BUILD_DIR}/trafficserver-${ATS_VERSION}/.done" ]; then
   # ATS 9.2.13 requires autotools on Ubuntu 26.04
   if [ "${ATS_VERSION}" = "9.2.13" ]; then
     autoreconf -fi
-    ./configure --prefix="${INSTALL_PREFIX}" --with-pcre=/usr/local/pcre
+    ./configure --prefix="${INSTALL_PREFIX}" --sysconfdir="${INSTALL_PREFIX}/etc/trafficserver" --localstatedir=/var --runstatedir=/run/trafficserver --with-user=ats --with-group=ats --with-pcre=/usr/local/pcre --disable-tests --disable-examples --disable-maintainer-mode
     make -j"$(nproc)"
   else
     cmake -S . -B build \
@@ -177,7 +177,7 @@ SyslogIdentifier=trafficserver
 ProtectSystem=strict
 ProtectHome=true
 ReadOnlyPaths=${INSTALL_PREFIX}
-ReadWritePaths=${INSTALL_PREFIX}/etc/trafficserver ${INSTALL_PREFIX}/var/trafficserver ${INSTALL_PREFIX}/opt/trafficserver/var/log/trafficserver /etc/ats-proxy /var/log/ats-health.log /run/trafficserver
+ReadWritePaths=${INSTALL_PREFIX}/etc/trafficserver ${INSTALL_PREFIX}/var/trafficserver /var/log/trafficserver /var/trafficserver /etc/ats-proxy /var/log/ats-health.log /run/trafficserver
 PrivateTmp=true
 PrivateDevices=true
 NoNewPrivileges=true

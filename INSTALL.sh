@@ -149,7 +149,7 @@ if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "301" ] || [ "$HTTP_CODE" = "302
   ok "Proxy responding (HTTP ${HTTP_CODE})"
 else
   warn "Proxy responded with HTTP ${HTTP_CODE} (expected 200/301). Check logs:"
-  warn "  sudo tail -20 /opt/trafficserver/var/log/trafficserver/diags.log"
+  warn "  sudo tail -20 /var/log/trafficserver/diags.log"
 fi
 
 # ---- step 6: hardening check ----

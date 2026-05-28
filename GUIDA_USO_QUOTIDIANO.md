@@ -7,7 +7,7 @@
 systemctl status trafficserver | head -3
 
 # 2. L'ultima richiesta e stata processata?
-sudo tail -1 /opt/trafficserver/var/log/trafficserver/diags.log
+sudo tail -1 /var/log/trafficserver/diags.log
 
 # 3. Hardening ancora integro? (eseguire una volta a settimana)
 sudo ATS_HARDENING_PROFILE=v3 ATS_HARDENING_STAGE=full \
@@ -140,7 +140,7 @@ grep "^USER utente" /etc/ats-proxy/auth.conf
 # Se assente, crealo: sudo ats-ctl user add utente
 
 # Passo 4: controlla i log per l'IP del cliente
-sudo grep "192.168.89.XX" /opt/trafficserver/var/log/trafficserver/diags.log | tail -20
+sudo grep "192.168.89.XX" /var/log/trafficserver/diags.log | tail -20
 # Cerca "AUTH FAIL" (password sbagliata), "DENY" (dominio bloccato), "407" (auth mancante)
 ```
 
@@ -216,22 +216,22 @@ sudo systemctl start trafficserver
 ```bash
 # Errori recenti
 sudo grep -i 'error\|fail\|alert' \
-  /opt/trafficserver/var/log/trafficserver/diags.log | tail -20
+  /var/log/trafficserver/diags.log | tail -20
 
 # Tentativi di auth falliti
 sudo grep 'AUTH FAIL' \
-  /opt/trafficserver/var/log/trafficserver/diags.log | tail -20
+  /var/log/trafficserver/diags.log | tail -20
 
 # Domini bloccati oggi
 sudo grep 'DENY' \
-  /opt/trafficserver/var/log/trafficserver/diags.log | tail -20
+  /var/log/trafficserver/diags.log | tail -20
 
 # Richieste processate (audit log)
-sudo tail -50 /opt/trafficserver/var/log/trafficserver/audit.log
+sudo tail -50 /var/log/trafficserver/audit.log
 
 # Chi ha usato il bypass admin
 sudo grep 'ADMIN bypass' \
-  /opt/trafficserver/var/log/trafficserver/diags.log | tail -10
+  /var/log/trafficserver/diags.log | tail -10
 ```
 
 ## Configurare i client

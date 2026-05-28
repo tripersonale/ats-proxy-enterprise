@@ -151,7 +151,7 @@ sleep 4
 ```bash
 # Il plugin deve apparire nei log
 sudo grep "ats_proxy_filter_v30.*plugin loaded" \
-  /opt/trafficserver/var/log/trafficserver/diags.log | tail -1
+  /var/log/trafficserver/diags.log | tail -1
 
 # httpbin.org deve essere bloccato
 curl -s -o /dev/null -w '%{http_code}\n' --connect-timeout 5 \
@@ -217,7 +217,7 @@ sudo tee /etc/fail2ban/jail.d/ats-proxy.local << 'EOF' > /dev/null
 enabled = true
 port = 8080
 filter = ats-proxy
-logpath = /opt/trafficserver/var/log/trafficserver/diags.log
+logpath = /var/log/trafficserver/diags.log
 maxretry = 10
 findtime = 60
 bantime = 600
@@ -287,8 +287,8 @@ sudo scripts/ats-ctl reload
 | Config ATS | `/etc/trafficserver/` |
 | Plugin v3.0 `.so` | `/opt/trafficserver/libexec/trafficserver/ats_proxy_filter_v30.so` |
 | Config plugin | `/etc/ats-proxy/` |
-| Log ATS | `/opt/trafficserver/var/log/trafficserver/diags.log` |
-| Log audit richieste | `/opt/trafficserver/var/log/trafficserver/audit.log` |
+| Log ATS | `/var/log/trafficserver/diags.log` |
+| Log audit richieste | `/var/log/trafficserver/audit.log` |
 | Health check | `/opt/ats_health.sh` (eseguito ogni minuto via cron) |
 | CVE check | `/opt/cve-check.sh` |
 | Systemd unit | `/etc/systemd/system/trafficserver.service` |
@@ -303,7 +303,7 @@ systemctl status trafficserver
 sudo systemctl restart trafficserver
 
 # Leggi i log
-sudo tail -f /opt/trafficserver/var/log/trafficserver/diags.log
+sudo tail -f /var/log/trafficserver/diags.log
 
 # Gestisci la policy
 sudo ats-ctl status
@@ -404,7 +404,7 @@ curl -s -o /dev/null -w '%{http_code}\n' --connect-timeout 5 \
 
 # 2. Plugin caricato?
 sudo grep "ats_proxy_filter_v30.*plugin loaded" \
-  /opt/trafficserver/var/log/trafficserver/diags.log | tail -1
+  /var/log/trafficserver/diags.log | tail -1
 # Atteso: riga con "plugin loaded"
 
 # 3. Hardening OK?

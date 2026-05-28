@@ -163,7 +163,7 @@ df -h
 du -sh /opt/trafficserver/
 
 # Spazio log
-du -sh /var/trafficserver/log/
+du -sh /var/log/trafficserver/
 ```
 
 **RAM e CPU**:
@@ -800,7 +800,7 @@ df -h
 
 # Cosa occupa spazio?
 sudo du -sh /opt/trafficserver/var/
-sudo du -sh /var/trafficserver/log/
+sudo du -sh /var/log/trafficserver/
 sudo du -sh /var/log/
 
 # File grandi
@@ -811,7 +811,7 @@ sudo find /opt/trafficserver -type f -size +100M -exec ls -lh {} \;
 
 ```bash
 # Pulire log vecchi
-sudo find /var/trafficserver/log/ -name '*.log' -mtime +30 -delete
+sudo find /var/log/trafficserver/ -name '*.log' -mtime +30 -delete
 
 # Pulire cache ATS
 sudo systemctl stop trafficserver
