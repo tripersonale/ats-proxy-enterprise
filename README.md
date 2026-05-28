@@ -8,60 +8,41 @@ Forward proxy HTTP/HTTPS con URL filtering, autenticazione e hardening enterpris
 
 > **Nota**: ATS Proxy Enterprise NON è un prodotto Apache. Il plugin, gli script e
 > la documentazione sono codice originale sotto licenza FEL-1.0. Apache Traffic Server
-> è un progetto della Apache Software Foundation, qui ridistribuito in forma compilata
-> sotto licenza Apache 2.0. Vedi [THIRD_PARTY.md](THIRD_PARTY.md).
+> è un progetto della Apache Software Foundation, qui referenziato come dipendenza
+> compilabile da sorgente. Vedi [THIRD_PARTY.md](THIRD_PARTY.md).
 
-## Installa in 1 comando
-
-```bash
-curl -sSL https://raw.githubusercontent.com/tripersonale/ats-proxy-enterprise/main/INSTALL.sh | sudo bash
-```
-
-Oppure, senza internet:
+## Installazione
 
 ```bash
-# Scarica la repo su un PC con internet, copiala su chiavetta, poi:
-sudo bash INSTALL.sh
+git clone https://github.com/tripersonale/ats-proxy-enterprise.git
+cd ats-proxy-enterprise
+# Segui GUIDE/GUIDA_INSTALLAZIONE.md (testata copia-incolla, 30-45 min)
 ```
 
-## Cosa include
-
-| Pacchetto | Contenuto |
-|---|---|
-| `ats-core` | ATS 9.2.13 LTS compilato per Ubuntu 26.04, forward proxy pronto |
-| `ats-proxy-plugin` | Plugin v3.0 con 5 modi (off, deny, whitelist, auth_all, auth_nd), password hashate |
-| `ats-proxy-hardening` | systemd sandbox, UFW, fail2ban, etckeeper, health check, CVE helper |
-| `ats-proxy-enterprise` | Meta-pacchetto: installa tutto con un comando |
-
-## Modalità del plugin
-
-| Modo | Comportamento |
-|---|---|
-| `off` | Plugin trasparente |
-| `deny` | Blocca domini in lista nera |
-| `whitelist` | Solo domini in lista bianca |
-| `auth_all` | Auth obbligatoria per tutto |
-| `auth_nd` | Deny > Whitelist > Auth (consigliato) |
+Oppure scarica lo [ZIP](https://github.com/tripersonale/ats-proxy-enterprise/archive/refs/heads/main.zip)
+per installazione offline via chiavetta.
 
 ## Guide
 
-- [Installazione](GUIDE/GUIDA_INSTALLAZIONE.md) — passo-passo, online e offline
-- [Uso quotidiano](GUIDE/GUIDA_USO_QUOTIDIANO.md) — checklist, troubleshooting, backup
-- [Presentazione prodotto](GUIDE/GUIDA_PRODOTTO.md) — architettura, confronto, roadmap
-- [Plugin e auth](GUIDE/GUIDA_PLUGIN_URL_FILTERING_AUTH.md) — modi, test, upgrade
-- [Hardening](GUIDE/GUIDA_HARDENING_ATS.md) — cosa/perché/come modificare
-- [Manuale ATS](GUIDE/MANUALE_ATS.md) — riferimento ATS
+| Guida | Contenuto |
+|---|---|
+| [Installazione](GUIDE/GUIDA_INSTALLAZIONE.md) | Passo-passo testato, online e offline |
+| [Manuale Operativo](GUIDE/MANUALE_OPERATIVO.md) | Uso quotidiano, troubleshooting, backup |
+| [Aggiornamento Futuro](GUIDE/GUIDA_AGGIORNAMENTO_FUTURO.md) | Upgrade ATS e plugin, librerie, rollback |
+| [Presentazione Prodotto](GUIDE/GUIDA_PRODOTTO.md) | Architettura, confronto, roadmap |
+| [Architettura](GUIDE/ARCHITETTURA_ATS_PROXY_V3.md) | Strati L0-L4, decisioni tecniche |
+| [Affidabilità Enterprise](GUIDE/DOCUMENTO_PLUGIN_ENTERPRISE.md) | Limiti, sicurezza, roadmap |
 
 ## Man pages
 
 ```bash
 man ats-ctl             # Gestione policy
-man ats-proxy-filter    # Plugin architecture
+man ats-proxy-filter    # Architettura plugin
 ```
 
 ## Repository
 
-- **Pubblica** (questa): `ats-proxy-enterprise` — installazione e guide
+- **Pubblica** (questa): `ats-proxy-enterprise` — installazione, guide, sorgenti
 - **Sviluppo**: `ats-proxy-enterprise-dev` — storico, build, documenti interni
 
 ## Licenza
