@@ -17,7 +17,34 @@
 
 ---
 
+## 0. Preparazione: clona la repo
+
+Tutto il lavoro parte da qui. La repo contiene gli script `compile-plugin.sh`,
+`ats-ctl`, e i template di configurazione. **Non** contiene ATS già compilato:
+ATS e PCRE1 li compileremo da sorgente nei passi successivi.
+
+```bash
+# Clona la repo nella tua home (o dove preferisci)
+cd ~
+git clone https://github.com/tripersonale/ats-proxy-enterprise.git
+cd ats-proxy-enterprise
+
+# 📁 D'ora in poi, tutti i comandi `scripts/...` e `config/...` partono da qui.
+# 📁 ATS verrà installato in /opt/trafficserver (percorso assoluto, non dentro la repo).
+# 📁 La configurazione ATS andrà in /etc/trafficserver.
+# 📁 La configurazione del plugin andrà in /etc/ats-proxy.
+```
+
+> **Offline?** Scarica il [ZIP](https://github.com/tripersonale/ats-proxy-enterprise/archive/refs/heads/main.zip)
+> su un PC con internet, copialo sulla macchina target via chiavetta, e fai
+> `unzip main.zip && cd ats-proxy-enterprise-main`. Poi prosegui da qui.
+> (Vedi anche Appendice A in fondo alla guida.)
+
+---
+
 ## 1. Dipendenze apt
+
+📁 *Directory corrente: non importa, apt installa a livello sistema.*
 
 ```bash
 sudo apt update
@@ -30,6 +57,9 @@ sudo apt install -y build-essential gcc g++ make libtool autoconf automake \
 > PCRE1, che compileremo da sorgente al passo 2.
 
 ## 2. Compila PCRE 8.45
+
+📁 *Lavoriamo in `/tmp`. I file .tar.bz2 e la compilazione stanno qui.
+Il risultato installato andrà in `/usr/local/pcre`.*
 
 ATS 9.2.13 richiede PCRE1. Su Ubuntu 26.04 va compilato in `/usr/local/pcre`:
 
@@ -49,6 +79,9 @@ sudo ldconfig
 
 ## 3. Scarica e compila ATS 9.2.13
 
+📁 *Sempre in `/tmp`. Il tarball, la compilazione e i file oggetto stanno qui.
+ATS installato andrà in `/opt/trafficserver`, la config in `/etc/trafficserver`.*
+
 ```bash
 cd /tmp
 wget https://downloads.apache.org/trafficserver/trafficserver-9.2.13.tar.bz2
@@ -66,8 +99,8 @@ sudo make install
 
 ## 4. Configura come forward proxy
 
-ATS 9.2.13 usa `records.config`. Di default e configurato come reverse proxy.
-Per forward proxy devi modificare il file `/etc/trafficserver/records.config`:
+📁 *Il file da editare è `/etc/trafficserver/records.config` (percorso assoluto,
+non dentro la repo).*
 
 ```bash
 # Backup del file originale
@@ -82,6 +115,9 @@ sudo sed -i 's/CONFIG proxy.config.url_remap.remap_required INT 1/CONFIG proxy.c
 ```
 
 ## 5. Avvia ATS e verifica L0
+
+📁 *Non serve essere in una directory specifica. I binari ATS sono in
+`/opt/trafficserver/bin/` (percorso assoluto).*
 
 ```bash
 # Verifica che la configurazione sia valida
@@ -102,15 +138,14 @@ Se vedi `404`, la config forward proxy non e stata applicata. Torna al passo 4.
 
 ---
 
-## 6. Scarica la repo ats-proxy e compila il plugin
+## 6. Compila il plugin v3.0
+
+📁 *Torna nella directory della repo (`~/ats-proxy-enterprise`). Gli script
+`compile-plugin.sh` e `ats-ctl` sono qui. Il `.so` compilato andrà in
+`bin/ats_proxy_filter_v30.so` dentro la repo, poi lo copieremo nella
+directory ATS.*
 
 ```bash
-# Clona la repo (o copiala via SCP se sei offline)
-git clone https://github.com/tripersonale/ats-proxy-enterprise.git
-# oppure: scp -r utente@host:/percorso/ats-proxy .
-
-cd ats-proxy
-
 # Compila il plugin v3.0
 bash scripts/compile-plugin.sh \
   --ats-src /tmp/trafficserver-9.2.13 \
@@ -122,6 +157,10 @@ bash scripts/compile-plugin.sh \
 ---
 
 ## 7. Installa e configura il plugin
+
+📁 *Siamo in `~/ats-proxy-enterprise`. I comandi `scripts/ats-ctl` sono relativi
+a questa directory. Il plugin .so viene copiato in `/opt/trafficserver/libexec/`,
+la config in `/etc/ats-proxy/`.*
 
 ```bash
 # Copia il plugin compilato nella directory ATS
@@ -162,6 +201,10 @@ curl -s -o /dev/null -w '%{http_code}\n' --connect-timeout 5 \
 ---
 
 ## 8. Applica hardening
+
+📁 *Siamo in `~/ats-proxy-enterprise`. Gli script `apply-ats-hardening-v3.sh`
+e `ats-hardening-check.sh` sono in `scripts/`. Il resto (UFW, fail2ban, systemd)
+agisce a livello sistema.*
 
 L'hardening e diviso in due stage: **core** (systemd, permessi, health check) e
 **network** (UFW, fail2ban, etckeeper).
@@ -217,7 +260,7 @@ sudo tee /etc/fail2ban/jail.d/ats-proxy.local << 'EOF' > /dev/null
 enabled = true
 port = 8080
 filter = ats-proxy
-logpath = /opt/trafficserver/var/log/trafficserver/diags.log
+  logpath = /var/lib/trafficserver/log/trafficserver/diags.log
 maxretry = 10
 findtime = 60
 bantime = 600
@@ -246,8 +289,10 @@ Passed: 25  Failed: 0  Warnings: 0
 
 ## 9. Testa tutti i modi del plugin
 
+📁 *Siamo in `~/ats-proxy-enterprise`. Lo script `ats-mode-test.sh` e in `scripts/`,
+i template di config in `config/`.*
+
 ```bash
-cd ats-proxy
 for mode in off deny whitelist auth_all auth_nd; do
   echo "=== $mode ==="
   sudo ATS_PROXY_CONFIG_DIR=/etc/ats-proxy \

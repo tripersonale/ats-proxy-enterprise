@@ -57,9 +57,9 @@ unit=$(systemctl cat trafficserver 2>/dev/null || true)
 if [ "$PROFILE" = "v3" ]; then
   expected_user='User=ats'
   expected_group='Group=ats'
-  expected_rw='ReadWritePaths=/opt/trafficserver/etc/trafficserver /opt/trafficserver/var/trafficserver /opt/trafficserver/var/log/trafficserver /etc/ats-proxy /var/log/ats-health.log /run/trafficserver'
-  records_file='/opt/trafficserver/etc/trafficserver/records.yaml'
-  plugin_file='/opt/trafficserver/etc/trafficserver/plugin.config'
+  expected_rw='ReadWritePaths=/etc/trafficserver /var/lib/trafficserver /var/log/trafficserver /run/trafficserver'
+  records_file='/etc/trafficserver/records.config'
+  plugin_file='/etc/trafficserver/plugin.config'
   filter_file='/etc/ats-proxy/filter.conf'
 else
   expected_user='User=ats'
