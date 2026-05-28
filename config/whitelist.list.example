@@ -1,6 +1,6 @@
 # ATS Proxy Enterprise v3.0 - whitelist
 #
-# Copiare in: /etc/ats-proxy/whitelist.list
+# Copiare in: /opt/trafficserver/etc/trafficserver/plugin/whitelist.list
 # Una voce per riga. La forma breve e valida:
 #   github.com
 # Oppure la forma esplicita:

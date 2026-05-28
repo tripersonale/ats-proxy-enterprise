@@ -53,7 +53,7 @@ sudo systemctl stop trafficserver
 sudo cp -a /opt/trafficserver /opt/trafficserver.bak-$(date +%Y%m%d)
 
 # Backup config plugin
-sudo cp -a /etc/ats-proxy /etc/ats-proxy.bak-$(date +%Y%m%d)
+sudo cp -a /opt/trafficserver/etc/trafficserver/plugin /opt/trafficserver/etc/trafficserver/plugin.bak-$(date +%Y%m%d)
 
 # Salva il plugin corrente
 cp /opt/trafficserver/libexec/trafficserver/ats_proxy_filter_v30.so \
@@ -175,7 +175,7 @@ Sezione 4.
 ```bash
 # Testa tutti i mode
 for mode in off deny whitelist auth_all auth_nd; do
-  sudo ATS_PROXY_CONFIG_DIR=/etc/ats-proxy \
+  sudo ATS_PROXY_CONFIG_DIR=/opt/trafficserver/etc/trafficserver/plugin \
     ATS_PROXY_TEMPLATE_DIR=/home/ubuntu/ats-proxy/config \
     bash scripts/ats-mode-test.sh "$mode" 8080 admin testpass
 done
@@ -285,7 +285,7 @@ sudo grep "ats_proxy_filter_v30.*plugin loaded" \
 # Testa tutti i mode
 for mode in off deny whitelist auth_all auth_nd; do
   echo "=== $mode ==="
-  sudo ATS_PROXY_CONFIG_DIR=/etc/ats-proxy \
+  sudo ATS_PROXY_CONFIG_DIR=/opt/trafficserver/etc/trafficserver/plugin \
     ATS_PROXY_TEMPLATE_DIR=$(pwd)/config \
     bash scripts/ats-mode-test.sh "$mode" 8080 admin testpass
 done
