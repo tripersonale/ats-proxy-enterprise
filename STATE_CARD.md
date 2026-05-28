@@ -42,23 +42,19 @@ sudo bash scripts/ats-hardening-check.sh 8080
 ## File Chiave
 
 - `README.md`: manifesto ICT e quick start.
-- `GUIDA_INSTALLAZIONE.md`: guida installazione completa (manuale + automatizzata, dual-OS).
-- `GUIDA_OPERATIVA.md`: guida operativa unificata (day-to-day, CVE, GDPR, incident response).
-- `scripts/install-ats-proxy.sh`: installer supportato.
-- `scripts/ats-regression-test.sh`: test funzionale.
-- `scripts/ats-hardening-check.sh`: test hardening.
-- `ARCHITETTURA_ATS_PROXY_V3.md`: architettura target plugin/installer atomico.
+- `GUIDA_INSTALLAZIONE_ATS_LTS.md`: guida installazione completa testata copia-incolla su VM pulita.
+- `GUIDA_USO_QUOTIDIANO.md`: manuale operatore giornaliero (checklist, troubleshooting, backup).
+- `GUIDA_PRODOTTO.md`: presentazione enterprise del prodotto.
 - `GUIDA_PLUGIN_URL_FILTERING_AUTH.md`: manuale plugin v3.0 e test mode.
-- `GUIDA_INSTALLAZIONE_ATS_LTS.md`: target ATS 10.1.2 su Ubuntu 26.04.
+- `ARCHITETTURA_ATS_PROXY_V3.md`: architettura a strati e decisioni.
 - `MANUALE_ATS.md`: manuale ATS minimo.
-- `ARTIFACTS.md`: manifest runtime.
-- `TEST_MATRIX.md`: evidenza test.
+- `DOCUMENTO_PLUGIN_ENTERPRISE.md`: affidabilita e roadmap.
+- `scripts/ats-ctl`: gestione policy senza edit manuale.
+- `scripts/ats-mode-test.sh`: test runtime per mode.
 
 ## Gap Residui
 
-- ATS 10.x non validato.
-- Plugin v3.0 compilato/runtime-testato su VM137 ATS 10.1.2; hardening full 25/25 OK.
-- TLS frontend opzionale non incluso nella batteria e2e.
+- TLS frontend opzionale non ancora testato su ATS 10.
 - Carico oltre 50 richieste concorrenti non validato in questa sessione.
 - Revisione legale FEL-1.0/CLA pendente.
 - Procedura formale di vulnerability assessment non ancora definita.
@@ -66,5 +62,5 @@ sudo bash scripts/ats-hardening-check.sh 8080
 
 ## Prossima Validazione
 
-- Testare TLS frontend con plugin v3 su ATS10.
+- Testare TLS frontend con plugin v3 su VM137.
 - Aggiornare installer atomico L0/L1/L3 con quanto validato su VM137.

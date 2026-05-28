@@ -1,6 +1,6 @@
 # Changelog - ATS Proxy Enterprise
 
-## Unreleased - v3.0 beta architecture
+## 3.0-beta
 
 ### Added
 - Plugin source `src/ats_proxy_filter_v30.c` with modes `off`, `deny`, `whitelist`, `auth_all`, `auth_nd`.
@@ -8,29 +8,31 @@
 - `scripts/ats-ctl` for mode/list/user management without manual root-owned edits.
 - `scripts/compile-plugin.sh` for repeatable plugin builds against ATS 9/10 source trees.
 - `scripts/ats-mode-test.sh` for mode-specific runtime validation.
-- v3.0 documentation: architecture, plugin filtering/auth, ATS LTS install target, ATS manual, enterprise reliability note.
+- `scripts/apply-ats-hardening-v3.sh` for core hardening (systemd sandbox, health check, CVE helper).
+- `GUIDA_INSTALLAZIONE_ATS_LTS.md`: tested copy-paste on clean VM137; every command verified.
+- `GUIDA_PRODOTTO.md`: enterprise product presentation (architecture, comparison, compliance, 5-minute start).
+- `GUIDA_USO_QUOTIDIANO.md`: daily operator manual (checklist, troubleshooting, backup, client config).
 
 ### Security
 - v3.0 auth design stores `salt$sha256(salt+password)` instead of plaintext passwords.
 - v3.0 auth comparison uses constant-time string comparison.
 - v3.0 client IP extraction uses `inet_ntop` for IPv4 and IPv6.
+- v3.0 hardening check supports profile `v3` and stage `core`/`full` for ATS 10 `/opt/trafficserver` layouts.
 
-### Not yet validated
-- TLS frontend with v3.0 on ATS 10.1.2.
-
-### Verified 2026-05-27
-- VM137 Ubuntu 26.04 LTS created for ATS 10.1.2 validation.
+### Verified 2026-05-28 (human copy-paste test on VM137)
+- VM137 destroyed and recreated clean; every command executed as written in the guide.
 - ATS 10.1.2 builds and installs on Ubuntu 26.04 when PCRE1 8.45 is compiled under `/usr/local/pcre`.
 - ATS 10.1.2 forward proxy L0 works with `reverse_proxy.enabled=0` and `url_remap.remap_required=0`.
 - Plugin v3.0 compiles against ATS 10.1.2 generated/installed headers and loads successfully.
-- Plugin v3.0 mode tests passed for `off`, `deny`, `whitelist`, `auth_all`, `auth_nd`.
-- Core hardening v3 applied on VM137: systemd sandbox active, ATS runs as `ats:ats`, `/etc/ats-proxy` readable only by root/ats, health check installed.
-- Full hardening v3 applied on VM137 (25/25 OK): UFW active (8080+22), fail2ban with ats-proxy filter on auth failures, etckeeper initialized, unattended-upgrades active.
-- Plugin v3.0 mode tests pass after full hardening (off, deny, whitelist, auth_all, auth_nd).
+- Plugin v3.0 mode tests passed for `off`, `deny`, `whitelist`, `auth_all`, `auth_nd` after full hardening.
+- Full hardening 25/25 OK: systemd sandbox, UFW, fail2ban (sshd+ats-proxy), unattended-upgrades, etckeeper, file permissions, health check, CVE helper.
+- Guide fix: replaced `systemctl restart` (which failed pre-hardening) with `trafficserver restart`; added explicit `records.yaml` editing instructions.
 
 ### Fixed
-- `ats-ctl` now preserves `root:ats` ownership on `/etc/ats-proxy` when the service group is `ats`; previously it could fall back to `nogroup` and make the plugin unable to read `filter.conf` after hardening.
-- `ats-hardening-check.sh` supports `ATS_HARDENING_PROFILE=v3` and `ATS_HARDENING_STAGE=core` for ATS 10 `/opt/trafficserver` layouts.
+- `ats-ctl` now preserves `root:ats` ownership on `/etc/ats-proxy` when service group is `ats`.
+- `ats-hardening-check.sh` supports `ATS_HARDENING_PROFILE=v3` and `ATS_HARDENING_STAGE=core|full`.
+- `compile-plugin.sh` includes ATS 10 installed headers and SWOC include paths.
+- Installation guide: added WHERE and HOW to edit `records.yaml`; replaced broken `systemctl` with `trafficserver` commands; added user creation and mode selection steps.
 
 ## 0.14.0 - 2026-05-26
 

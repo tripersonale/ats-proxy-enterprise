@@ -3,31 +3,38 @@
 > Forward Proxy HTTP/HTTPS con URL Filtering, Autenticazione Basic e Hardening Enterprise
 > Allineato al MANIFESTO_ICT.md v1.0 e ai principi CULLA v2.0.2
 
-**Versione 0.14.0** · ATS 9.2.13 LTS · Ubuntu 24.04 / 26.04 · Compliance GDPR / NIS2 / D.Lgs 196 / PSNC / ISO 27001
+**Versione 3.0-beta** · ATS 10.1.2 LTS · Ubuntu 26.04 LTS · Compliance GDPR / NIS2 / D.Lgs 196 / ISO 27001
 
-[![License: FEL-1.0](https://img.shields.io/badge/license-FEL--1.0-blue)](LICENSE.md) [![Hardening: 25/25](https://img.shields.io/badge/hardening-25%2F25-brightgreen)](TEST_MATRIX.md) [![Regression: 9/9](https://img.shields.io/badge/regression-9%2F9-brightgreen)](TEST_MATRIX.md)
+[![License: FEL-1.0](https://img.shields.io/badge/license-FEL--1.0-blue)](LICENSE.md) [![Hardening: 25/25](https://img.shields.io/badge/hardening-25%2F25-brightgreen)](TEST_MATRIX.md) [![Mode Tests: 11/11](https://img.shields.io/badge/modes-11%2F11-brightgreen)](TEST_MATRIX.md)
 
-## Stato v3.0 Beta
+## Stato v3.0 — Validata
 
-La linea v3.0 e in costruzione per riscattare l'esperienza di installazione emersa nel test reale del 2026-05-26: ATS core, plugin, auth, hardening e operativita devono essere mattoni separati.
+La linea v3.0 e stata testata copia-incolla su VM137 Ubuntu 26.04 il 2026-05-28:
+ATS 10.1.2 build, forward proxy L0, plugin v3 (5 modi), hardening 25/25.
+Ogni comando della guida installazione e stato eseguito esattamente come scritto.
 
-Documenti chiave:
+### Per iniziare
 
-- `ARCHITETTURA_ATS_PROXY_V3.md` — architettura validata a livelli e plugin modes.
-- `GUIDA_INSTALLAZIONE_ATS_LTS.md` — target ATS 10.1.2 LTS su Ubuntu 26.04.
-- `MANUALE_ATS.md` — manuale ATS minimo.
-- `GUIDA_PLUGIN_URL_FILTERING_AUTH.md` — URL filtering, auth e test dei modes.
-- `DOCUMENTO_PLUGIN_ENTERPRISE.md` — affidabilita, limiti e roadmap enterprise.
+| Cosa ti serve | Documento |
+|---|---|
+| **Installare** il proxy da zero | `GUIDA_INSTALLAZIONE_ATS_LTS.md` |
+| **Usare** il proxy ogni giorno | `GUIDA_USO_QUOTIDIANO.md` |
+| **Presentare** il prodotto | `GUIDA_PRODOTTO.md` |
+| **Capire** il plugin e i modi | `GUIDA_PLUGIN_URL_FILTERING_AUTH.md` |
+| **Architettura** e decisioni | `ARCHITETTURA_ATS_PROXY_V3.md` |
+| **Manuale ATS** (riferimento) | `MANUALE_ATS.md` |
+| **Affidabilita enterprise** | `DOCUMENTO_PLUGIN_ENTERPRISE.md` |
+| **Compliance** (GDPR/NIS2) | `AUDIT_SICUREZZA_COMPLIANCE_v1.0.md` |
 
-Artefatti v3.0:
+### Comandi rapidi dopo l'installazione
 
-- `src/ats_proxy_filter_v30.c` — plugin unico con `off`, `deny`, `whitelist`, `auth_all`, `auth_nd`.
-- `config/` — file example separati per filter, deny, whitelist, admin, auth.
-- `scripts/ats-ctl` — gestione configurazione senza edit manuale.
-- `scripts/compile-plugin.sh` — build ripetibile plugin ATS 9/10.
-- `scripts/ats-mode-test.sh` — test runtime per mode.
-
-Stato: sorgente/tooling pronti, runtime ATS 10.1.2 ancora da validare su VM pulita.
+```bash
+ats-ctl status                      # Stato policy
+sudo ats-ctl deny add dominio       # Blocca dominio
+sudo ats-ctl user add nome          # Crea utente
+sudo ats-ctl mode auth_nd           # Modo consigliato
+sudo ats-ctl reload                 # Applica
+```
 
 ---
 
