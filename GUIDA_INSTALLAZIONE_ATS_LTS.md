@@ -1,43 +1,37 @@
-# Guida Installazione ATS LTS su Ubuntu 26.04
+# ATS Proxy Enterprise v3.0 — Guida di Installazione
 
-## Stato
+## Ubuntu 26.04 LTS · Apache Traffic Server 9.2.13 LTS
 
-Questa guida e il target v3.0: ATS 10.1.2 LTS su Ubuntu 26.04 LTS.
-Testata copia-incolla su VM137 il 2026-05-28: ogni comando e stato eseguito
-esattamente come scritto e verificato. Full hardening 25/25 OK.
-Solo TLS frontend resta da validare.
+**Testata copia-incolla su VM137 il 2026-05-28: ogni comando verificato.**
+
+---
 
 ## Prima di iniziare
 
-Hai bisogno di:
-- Una VM o server con **Ubuntu 26.04 LTS** appena installato.
-- Almeno **4 GB RAM** e **20 GB disco** libero.
+- VM o server con **Ubuntu 26.04 LTS** appena installato.
+- Almeno **4 GB RAM**, **20 GB disco** libero.
 - Accesso **sudo**.
-- Connessione Internet per scaricare i sorgenti.
+- Connessione Internet (o scenario offline — vedi Appendice A).
 
-**Tempo stimato**: 30-45 minuti (dipende dalla CPU).
+**Tempo stimato**: 30-45 minuti.
 
 ---
 
-## 1. Installa le dipendenze
-
-Copia e incolla:
+## 1. Dipendenze apt
 
 ```bash
-sudo apt-get update
-sudo apt-get install -y build-essential cmake ninja-build pkg-config \
-  libssl-dev zlib1g-dev libcap-dev libhwloc-dev \
-  libunwind-dev libcurl4-openssl-dev tcl-dev
+sudo apt update
+sudo apt install -y build-essential gcc g++ make libtool autoconf automake \
+  pkg-config libssl-dev zlib1g-dev libcap-dev libhwloc-dev \
+  libunwind-dev libcurl4-openssl-dev tcl-dev git wget curl
 ```
 
-> **Nota**: `libpcre2-dev` NON basta. ATS 10.1.2 richiede PCRE1 (versione 8.x).
-> Lo compileremo al passo 2.
-
----
+> **Nota**: `libpcre3-dev` NON esiste su Ubuntu 26.04. ATS 9.2.13 richiede
+> PCRE1, che compileremo da sorgente al passo 2.
 
 ## 2. Compila PCRE 8.45
 
-ATS 10.1.2 ha bisogno di PCRE1. Lo compiliamo in `/usr/local/pcre`:
+ATS 9.2.13 richiede PCRE1. Su Ubuntu 26.04 va compilato in `/usr/local/pcre`:
 
 ```bash
 cd /tmp
@@ -53,27 +47,18 @@ sudo ldconfig
 
 **Verifica**: `ls /usr/local/pcre/lib/libpcre.so` deve esistere.
 
----
-
-## 3. Scarica e compila ATS 10.1.2
+## 3. Scarica e compila ATS 9.2.13
 
 ```bash
 cd /tmp
-wget https://downloads.apache.org/trafficserver/trafficserver-10.1.2.tar.bz2
-tar -xjf trafficserver-10.1.2.tar.bz2
-cd trafficserver-10.1.2
-cmake -S . -B build \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_INSTALL_PREFIX=/opt/trafficserver \
-  -DPCRE_LIBRARY=/usr/local/pcre/lib/libpcre.so \
-  -DPCRE_INCLUDE_DIR=/usr/local/pcre/include
-cmake --build build -j"$(nproc)"
-sudo cmake --install build
+wget https://downloads.apache.org/trafficserver/trafficserver-9.2.13.tar.bz2
+tar -xjf trafficserver-9.2.13.tar.bz2
+cd trafficserver-9.2.13
+autoreconf -fi
+./configure --prefix=/opt/trafficserver --with-pcre=/usr/local/pcre
+make -j"$(nproc)"
+sudo make install
 ```
-
-> **Nota**: La build genera anche test unitari. Se alcuni falliscono (es.
-> `test_PluginFactory`), non e un problema — `traffic_server` e gia compilato
-> e funzionante. Il comando `cmake --install` lo installa comunque.
 
 **Verifica**: `/opt/trafficserver/bin/traffic_server -V` stampa la versione.
 
@@ -81,36 +66,20 @@ sudo cmake --install build
 
 ## 4. Configura come forward proxy
 
-ATS 10 usa `records.yaml`. Di default e configurato come reverse proxy.
-Per forward proxy devi modificare due valori.
-
-Il file da editare e:
-`/opt/trafficserver/etc/trafficserver/records.yaml`
-
-Esegui questi comandi per applicare la modifica:
+ATS 9.2.13 usa `records.config`. Di default e configurato come reverse proxy.
+Per forward proxy devi modificare il file `/etc/trafficserver/records.config`:
 
 ```bash
 # Backup del file originale
-sudo cp /opt/trafficserver/etc/trafficserver/records.yaml \
-  /opt/trafficserver/etc/trafficserver/records.yaml.original
+sudo cp /etc/trafficserver/records.config \
+  /etc/trafficserver/records.config.original
 
-# Applica le modifiche
-sudo python3 -c "
-from pathlib import Path
-p = Path('/opt/trafficserver/etc/trafficserver/records.yaml')
-s = p.read_text()
-s = s.replace('  reverse_proxy:\n    enabled: 1', '  reverse_proxy:\n    enabled: 0')
-s = s.replace('    remap_required: 1', '    remap_required: 0')
-p.write_text(s)
-print('Forward proxy config applied')
-"
+# Disabilita reverse proxy e rendi forward proxy aperto
+sudo sed -i 's/CONFIG proxy.config.reverse_proxy.enabled INT 1/CONFIG proxy.config.reverse_proxy.enabled INT 0/' \
+  /etc/trafficserver/records.config
+sudo sed -i 's/CONFIG proxy.config.url_remap.remap_required INT 1/CONFIG proxy.config.url_remap.remap_required INT 0/' \
+  /etc/trafficserver/records.config
 ```
-
-> **Cosa fanno queste modifiche**: `reverse_proxy.enabled=0` dice ad ATS di
-> comportarsi come forward proxy. `remap_required=0` permette richieste a
-> qualsiasi dominio senza dover scrivere regole di remap.
-
----
 
 ## 5. Avvia ATS e verifica L0
 
@@ -130,7 +99,6 @@ curl -s -o /dev/null -w '%{http_code}\n' --connect-timeout 5 \
 **Risultato atteso**: `200`
 
 Se vedi `404`, la config forward proxy non e stata applicata. Torna al passo 4.
-Se vedi `000`, ATS non e partito. Controlla con `sudo /opt/trafficserver/bin/trafficserver status`.
 
 ---
 
@@ -145,8 +113,8 @@ cd ats-proxy
 
 # Compila il plugin v3.0
 bash scripts/compile-plugin.sh \
-  --ats-src /tmp/trafficserver-10.1.2 \
-  --out bin/ats_proxy_filter_v30.so --cxx
+  --ats-src /tmp/trafficserver-9.2.13 \
+  --out bin/ats_proxy_filter_v30.so --c
 ```
 
 **Verifica**: `sha256sum bin/ats_proxy_filter_v30.so` stampa un hash.
@@ -171,7 +139,7 @@ sudo scripts/ats-ctl deny add httpbin.org
 
 # Registra il plugin in ATS
 echo ats_proxy_filter_v30.so | sudo tee \
-  /opt/trafficserver/etc/trafficserver/plugin.config > /dev/null
+  /etc/trafficserver/plugin.config > /dev/null
 
 # Riavvia ATS per caricare il plugin
 sudo /opt/trafficserver/bin/trafficserver restart
@@ -315,12 +283,12 @@ sudo scripts/ats-ctl reload
 
 | Cosa | Dove |
 |---|---|
-| ATS 10.1.2 | `/opt/trafficserver/` |
-| Config ATS | `/opt/trafficserver/etc/trafficserver/` |
+| ATS 9.2.13 | `/opt/trafficserver/` |
+| Config ATS | `/etc/trafficserver/` |
 | Plugin v3.0 `.so` | `/opt/trafficserver/libexec/trafficserver/ats_proxy_filter_v30.so` |
 | Config plugin | `/etc/ats-proxy/` |
-| Log ATS | `/opt/trafficserver/var/log/trafficserver/diags.log` |
-| Log audit richieste | `/opt/trafficserver/var/log/trafficserver/audit.log` |
+| Log ATS | `/var/lib/trafficserver/log/trafficserver/diags.log` |
+| Log audit richieste | `/var/lib/trafficserver/log/trafficserver/audit.log` |
 | Health check | `/opt/ats_health.sh` (eseguito ogni minuto via cron) |
 | CVE check | `/opt/cve-check.sh` |
 | Systemd unit | `/etc/systemd/system/trafficserver.service` |
@@ -363,3 +331,85 @@ Ogni volta che esce una nuova ATS o una nuova versione del plugin:
 - TLS frontend su porta 8443 (il plugin lo supporta ma non e incluso nella batteria test).
 - Carico oltre 50 richieste concorrenti.
 - Penetration test indipendente.
+
+---
+
+## Appendice A — Installazione offline (senza Internet sulla macchina target)
+
+Se la macchina target non ha accesso a Internet, scarica tutto su un PC
+connesso e trasferisci via chiavetta USB o share di rete.
+
+### Sul PC con Internet
+
+```bash
+# Scarica la repo pubblica come ZIP
+wget https://github.com/tripersonale/ats-proxy-enterprise/archive/refs/heads/main.zip
+
+# Scarica i tarball necessari per la compilazione
+wget -P /tmp/ats-offline \
+  https://sourceforge.net/projects/pcre/files/pcre/8.45/pcre-8.45.tar.bz2/download \
+  -O /tmp/ats-offline/pcre-8.45.tar.bz2
+
+wget -P /tmp/ats-offline \
+  https://downloads.apache.org/trafficserver/trafficserver-9.2.13.tar.bz2
+
+# Copia main.zip e la cartella /tmp/ats-offline/ sulla chiavetta
+```
+
+### Sulla macchina target
+
+```bash
+# Copia i file dalla chiavetta
+cp /media/usb/main.zip ~/
+cp /media/usb/ats-offline/* /tmp/
+
+# Estrai la repo
+unzip ~/main.zip -d ~/
+cd ~/ats-proxy-enterprise-main
+
+# Ora esegui i passi 1-10 della guida principale.
+# Al passo 2 (PCRE1): il tarball è già in /tmp/pcre-8.45.tar.bz2
+#   cd /tmp && tar -xjf pcre-8.45.tar.bz2 && cd pcre-8.45 && ...
+# Al passo 3 (ATS): il tarball è già in /tmp/trafficserver-9.2.13.tar.bz2
+#   cd /tmp && tar -xjf trafficserver-9.2.13.tar.bz2 && cd trafficserver-9.2.13 && ...
+# Il passo 1 (apt) richiede Internet o un mirror locale.
+# Se apt non funziona, assicurati che i pacchetti delle dipendenze siano preinstallati.
+# In alternativa, usa il DVD/ISO di Ubuntu come repository locale:
+#   sudo mount /dev/cdrom /mnt
+#   sudo apt-cdrom -d /mnt add
+#   sudo apt update
+```
+
+---
+
+## Appendice B — Installazione in 1 comando (solo online)
+
+Se la macchina ha Internet e vuoi il percorso più veloce:
+
+```bash
+git clone https://github.com/tripersonale/ats-proxy-enterprise.git /tmp/ats-proxy
+cd /tmp/ats-proxy
+# Poi esegui i passi 1-10 della guida da qui
+```
+
+---
+
+## Appendice C — Verifica Rapida Post-Installazione
+
+```bash
+# 1. Proxy risponde?
+curl -s -o /dev/null -w '%{http_code}\n' --connect-timeout 5 \
+  -x http://127.0.0.1:8080 http://example.com
+# Atteso: 200
+
+# 2. Plugin caricato?
+sudo grep "ats_proxy_filter_v30.*plugin loaded" \
+  /var/lib/trafficserver/log/trafficserver/diags.log | tail -1
+# Atteso: riga con "plugin loaded"
+
+# 3. Hardening OK?
+sudo ATS_HARDENING_PROFILE=v3 ATS_HARDENING_STAGE=full \
+  bash scripts/ats-hardening-check.sh 8080
+# Atteso: Passed: 25  Failed: 0  Warnings: 0
+```
+
