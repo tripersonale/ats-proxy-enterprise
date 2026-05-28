@@ -50,7 +50,8 @@ cd /tmp
 wget https://downloads.apache.org/trafficserver/trafficserver-9.2.13.tar.bz2
 tar -xjf trafficserver-9.2.13.tar.bz2 && cd trafficserver-9.2.13
 autoreconf -fi
-./configure --prefix=/opt/trafficserver --with-pcre=/usr/local/pcre
+./configure --prefix=/opt/trafficserver --with-pcre=/usr/local/pcre \
+  --localstatedir=/var
 make -j"$(nproc)" && sudo make install
 ```
 **Verifica**: `/opt/trafficserver/bin/traffic_server -V`
@@ -81,12 +82,6 @@ curl -s -o /dev/null -w '%{http_code}\n' --connect-timeout 5 \
   -x http://127.0.0.1:8080 http://example.com
 ```
 **Atteso**: `200`
-
-> **Nota sui log**: ATS scrive i log in `/opt/trafficserver/var/log/trafficserver/` (path
-> di default da `--prefix`). Per usarli da `/var/log/trafficserver/`, crea un symlink:
-> ```bash
-> sudo ln -sf /opt/trafficserver/var/log/trafficserver /var/log/trafficserver
-> ```
 
 ## 6. Compila plugin v3
 

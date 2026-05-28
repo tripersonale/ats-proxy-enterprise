@@ -4,7 +4,7 @@ Manuale unificato per l'operatore. Copre gestione ATS, plugin v3, troubleshootin
 configurazione client, backup e manutenzione periodica.
 
 **Convenzioni path**: questo manuale usa i path di ATS9 da pacchetto Ubuntu
-(`/etc/trafficserver`, `/opt/trafficserver/var/trafficserver/`). Se ATS e compilato manualmente
+(`/etc/trafficserver`, `/var/trafficserver/`). Se ATS e compilato manualmente
 in `/opt/trafficserver`, i path equivalenti sono:
 Config: `/opt/trafficserver/etc/trafficserver/`
 Log: `/var/log/trafficserver/`
@@ -163,7 +163,7 @@ df -h
 du -sh /opt/trafficserver/
 
 # Spazio log
-du -sh /opt/trafficserver/var/trafficserver/log/
+du -sh /var/trafficserver/log/
 ```
 
 **RAM e CPU**:
@@ -800,7 +800,7 @@ df -h
 
 # Cosa occupa spazio?
 sudo du -sh /opt/trafficserver/var/
-sudo du -sh /opt/trafficserver/var/trafficserver/log/
+sudo du -sh /var/trafficserver/log/
 sudo du -sh /var/log/
 
 # File grandi
@@ -811,11 +811,11 @@ sudo find /opt/trafficserver -type f -size +100M -exec ls -lh {} \;
 
 ```bash
 # Pulire log vecchi
-sudo find /opt/trafficserver/var/trafficserver/log/ -name '*.log' -mtime +30 -delete
+sudo find /var/trafficserver/log/ -name '*.log' -mtime +30 -delete
 
 # Pulire cache ATS
 sudo systemctl stop trafficserver
-sudo rm -rf /opt/trafficserver/var/trafficserver/cache/*
+sudo rm -rf /var/trafficserver/cache/*
 sudo systemctl start trafficserver
 
 # Logrotate (se non configurato)
