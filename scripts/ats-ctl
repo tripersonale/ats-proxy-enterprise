@@ -60,7 +60,7 @@ require_cmd() {
 }
 
 ensure_dir() {
-  install -d -m 0750 "$CONFIG_DIR"
+  install -d -m 0755 "$CONFIG_DIR"
 }
 
 config_file() { printf '%s/%s\n' "$CONFIG_DIR" "$1"; }
