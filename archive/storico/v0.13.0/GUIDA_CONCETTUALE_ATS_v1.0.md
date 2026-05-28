@@ -32,7 +32,7 @@ UFW e fail2ban sono layer aggiuntivi, non sostitutivi.
 
 ## Cache ATS
 
-ATS puo usare cache RAM e disco. Nel progetto e configurata cache disco in `/var/lib/trafficserver/cache` e RAM cache via `records.config`.
+ATS puo usare cache RAM e disco. Nel progetto e configurata cache disco in `/opt/trafficserver/var/trafficserver/cache` e RAM cache via `records.config`.
 
 La cache HTTP non va confusa con la cache DNS. Il limite noto del plugin riguarda il fatto che `TS_HTTP_OS_DNS_HOOK` puo non scattare quando la risoluzione DNS e gia in cache.
 

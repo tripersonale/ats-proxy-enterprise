@@ -11,7 +11,7 @@
 ATS scrive `audit.log` su disco. Per centralizzare i log:
 
 ```
-/var/lib/trafficserver/log/trafficserver/audit.log
+/opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
     │
     ├──▶ rsyslog (imfile) ──▶ SIEM via TCP/UDP syslog (qualsiasi)
     ├──▶ Filebeat ──▶ Logstash ──▶ Elasticsearch ──▶ Kibana (ELK)
@@ -50,11 +50,11 @@ ATS scrive `audit.log` come utente `ats:ats` con permessi `644`. rsyslog gira co
 
 ```bash
 # Rendi il file leggibile da syslog
-sudo chmod o+r /var/lib/trafficserver/log/trafficserver/audit.log
+sudo chmod o+r /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
 
 # OPPURE aggiungi syslog al gruppo ats
 sudo usermod -a -G ats syslog
-sudo chmod g+r /var/lib/trafficserver/log/trafficserver/audit.log
+sudo chmod g+r /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
 ```
 
 ### 3.2 Configurazione imfile
@@ -64,7 +64,7 @@ sudo tee /etc/rsyslog.d/99-ats-audit.conf > /dev/null << 'EOF'
 module(load="imfile")
 
 input(type="imfile"
-      File="/var/lib/trafficserver/log/trafficserver/audit.log"
+      File="/opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log"
       Tag="ats-audit"
       Facility="local0"
       Severity="info"
@@ -117,7 +117,7 @@ filebeat.inputs:
   - type: filestream
     enabled: true
     paths:
-      - /var/lib/trafficserver/log/trafficserver/audit.log
+      - /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
     fields:
       log_type: ats-audit
     fields_under_root: false
@@ -215,7 +215,7 @@ output {
 
 ```bash
 # 1. Il file audit.log esiste ed è leggibile
-sudo ls -la /var/lib/trafficserver/log/trafficserver/audit.log
+sudo ls -la /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
 
 # 2. rsyslog/filebeat è attivo
 systemctl is-active rsyslog filebeat
@@ -224,7 +224,7 @@ systemctl is-active rsyslog filebeat
 curl -s -o /dev/null -x http://127.0.0.1:8080 http://httpbin.org/ip
 
 # 4. Verifica che il log contenga la richiesta
-sudo tail -3 /var/lib/trafficserver/log/trafficserver/audit.log
+sudo tail -3 /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
 
 # 5. Verifica arrivo su SIEM (lato collector)
 # tcpdump -i any port 514 -A | grep httpbin.org

@@ -198,7 +198,7 @@ I riferimenti normativi considerati:
 
 **Implementazione**:
 - **HTTPS tunnel**: CONNECT end-to-end cifrato, il proxy NON vede il contenuto.
-- **Cache sicura**: `/var/lib/trafficserver/cache` accessibile solo da `ats:ats` (mode 700).
+- **Cache sicura**: `/opt/trafficserver/var/trafficserver/cache` accessibile solo da `ats:ats` (mode 700).
 - **Config file**: `chmod 640`, leggibili solo da root e ats.
 
 **Da implementare**:

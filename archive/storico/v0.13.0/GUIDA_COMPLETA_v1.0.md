@@ -58,8 +58,8 @@ Layer di sicurezza:
 |----------|-------|
 | `/opt/trafficserver` | installazione ATS |
 | `/etc/trafficserver` | configurazione ATS e plugin |
-| `/var/lib/trafficserver/cache` | cache |
-| `/var/lib/trafficserver/log/trafficserver/audit.log` | log audit |
+| `/opt/trafficserver/var/trafficserver/cache` | cache |
+| `/opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log` | log audit |
 | `/opt/trafficserver/libexec/trafficserver/ats_proxy_filter.so` | plugin caricato da ATS |
 | `/opt/ats_health.sh` | health check automatico |
 | `/var/log/ats-health.log` | log health check |
@@ -113,7 +113,7 @@ ats_proxy_filter.so
 `storage.config`:
 
 ```text
-/var/lib/trafficserver/cache 10G
+/opt/trafficserver/var/trafficserver/cache 10G
 ```
 
 Permessi:
@@ -155,7 +155,7 @@ Applicato dall'installer:
 - servizio `trafficserver` con `User=ats`, `Group=ats`;
 - `ProtectSystem=strict`, `ProtectHome=true`, `PrivateTmp=true`, `PrivateDevices=true`, `NoNewPrivileges=true`;
 - `ReadOnlyPaths=/opt/trafficserver`;
-- `ReadWritePaths=/etc/trafficserver /var/lib/trafficserver /var/log/trafficserver`;
+- `ReadWritePaths=/etc/trafficserver /opt/trafficserver/var/trafficserver /opt/trafficserver/var/log/trafficserver`;
 - UFW active, porta proxy aperta solo dalla subnet autorizzata;
 - SSH key-only, root login disabilitato;
 - fail2ban jails `sshd` e `ats-proxy`;
@@ -181,7 +181,7 @@ sudo tail -20 /var/log/ats-health.log
 
 ## Logging
 
-Log audit: `/var/lib/trafficserver/log/trafficserver/audit.log`.
+Log audit: `/opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log`.
 
 Formato validato:
 
@@ -192,9 +192,9 @@ Formato validato:
 Comandi utili:
 
 ```bash
-sudo tail -f /var/lib/trafficserver/log/trafficserver/audit.log
-sudo grep ' 403 ' /var/lib/trafficserver/log/trafficserver/audit.log
-sudo grep ' 407 ' /var/lib/trafficserver/log/trafficserver/audit.log
+sudo tail -f /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
+sudo grep ' 403 ' /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
+sudo grep ' 407 ' /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
 ```
 
 ## Troubleshooting Rapido

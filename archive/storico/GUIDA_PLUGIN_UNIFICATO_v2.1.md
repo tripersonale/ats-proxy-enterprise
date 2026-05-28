@@ -160,7 +160,7 @@ Richiesta → OS_DNS hook
 |----------|-------|-----------|
 | Plugin non caricato | Permessi .so o plugin.config | `chown ats:ats /opt/trafficserver/lib/modules/ats_proxy_filter.so /etc/trafficserver/plugin.config` |
 | Config non letto | Permessi ats_proxy_filter.conf | `chown ats:ats /etc/trafficserver/ats_proxy_filter.conf` |
-| Admin bypass non funziona | ADMIN non nel config | Verificare `grep 'admin IPs' /var/lib/trafficserver/log/trafficserver/diags.log` |
+| Admin bypass non funziona | ADMIN non nel config | Verificare `grep 'admin IPs' /opt/trafficserver/opt/trafficserver/var/log/trafficserver/diags.log` |
 | 403 invece di 200 | Non sei in ADMIN list | Controllare IP con `hostname -I` |
 | 407 su dominio whitelist | WHITELIST non matcha (porta nel nome?) | Host deve matchare esattamente `google.com`, non `google.com:80` |
 

@@ -287,8 +287,8 @@ sudo scripts/ats-ctl reload
 | Config ATS | `/etc/trafficserver/` |
 | Plugin v3.0 `.so` | `/opt/trafficserver/libexec/trafficserver/ats_proxy_filter_v30.so` |
 | Config plugin | `/etc/ats-proxy/` |
-| Log ATS | `/var/lib/trafficserver/log/trafficserver/diags.log` |
-| Log audit richieste | `/var/lib/trafficserver/log/trafficserver/audit.log` |
+| Log ATS | `/opt/trafficserver/var/log/trafficserver/diags.log` |
+| Log audit richieste | `/opt/trafficserver/var/log/trafficserver/audit.log` |
 | Health check | `/opt/ats_health.sh` (eseguito ogni minuto via cron) |
 | CVE check | `/opt/cve-check.sh` |
 | Systemd unit | `/etc/systemd/system/trafficserver.service` |
@@ -404,7 +404,7 @@ curl -s -o /dev/null -w '%{http_code}\n' --connect-timeout 5 \
 
 # 2. Plugin caricato?
 sudo grep "ats_proxy_filter_v30.*plugin loaded" \
-  /var/lib/trafficserver/log/trafficserver/diags.log | tail -1
+  /opt/trafficserver/var/log/trafficserver/diags.log | tail -1
 # Atteso: riga con "plugin loaded"
 
 # 3. Hardening OK?

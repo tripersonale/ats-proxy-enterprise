@@ -6,8 +6,8 @@ Documento corrente ricreato in root. La versione storica completa resta in `arch
 
 | Log | Percorso | Scopo |
 |-----|----------|-------|
-| Audit ATS | `/var/lib/trafficserver/log/trafficserver/audit.log` | richieste proxy |
-| Diagnostics ATS | `/var/lib/trafficserver/log/trafficserver/diags.log` | plugin, errori, load |
+| Audit ATS | `/opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log` | richieste proxy |
+| Diagnostics ATS | `/opt/trafficserver/opt/trafficserver/var/log/trafficserver/diags.log` | plugin, errori, load |
 | Health | `/var/log/ats-health.log` | stato health check |
 | Journal | `journalctl -u trafficserver` | servizio systemd |
 
@@ -31,11 +31,11 @@ Campi principali:
 ## Comandi Operativi
 
 ```bash
-sudo tail -f /var/lib/trafficserver/log/trafficserver/audit.log
-sudo tail -f /var/lib/trafficserver/log/trafficserver/diags.log
-sudo grep ' 403 ' /var/lib/trafficserver/log/trafficserver/audit.log
-sudo grep ' 407 ' /var/lib/trafficserver/log/trafficserver/audit.log
-sudo grep 'ats_proxy_filter' /var/lib/trafficserver/log/trafficserver/diags.log | tail -50
+sudo tail -f /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
+sudo tail -f /opt/trafficserver/opt/trafficserver/var/log/trafficserver/diags.log
+sudo grep ' 403 ' /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
+sudo grep ' 407 ' /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
+sudo grep 'ats_proxy_filter' /opt/trafficserver/opt/trafficserver/var/log/trafficserver/diags.log | tail -50
 ```
 
 ## Forwarding Rsyslog Esempio
@@ -44,7 +44,7 @@ sudo grep 'ats_proxy_filter' /var/lib/trafficserver/log/trafficserver/diags.log 
 sudo tee /etc/rsyslog.d/40-ats-audit.conf >/dev/null <<'EOF'
 module(load="imfile")
 input(type="imfile"
-      File="/var/lib/trafficserver/log/trafficserver/audit.log"
+      File="/opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log"
       Tag="ats-audit"
       Severity="info"
       Facility="local6")

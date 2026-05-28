@@ -75,7 +75,7 @@
 - `records.config`: forward proxy su porta 8080, DNS via systemd-resolved
 - `ip_allow.yaml`: 127.0.0.1/::1 + 192.168.89.0/24 allowed, resto deny
 - `logging.yaml`: formato audit (IP client, request, status, bytes, FQDN)
-- `storage.config`: 10 GB cache su /var/lib/trafficserver/cache
+- `storage.config`: 10 GB cache su /opt/trafficserver/var/trafficserver/cache
 - `remap.config`: vuoto (forward proxy puro)
 - Systemd: `/etc/systemd/system/trafficserver.service` (Type=forking + hardening)
 

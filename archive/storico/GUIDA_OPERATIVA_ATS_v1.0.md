@@ -24,7 +24,7 @@ sudo systemctl enable trafficserver
 sudo journalctl -u trafficserver -f
 
 # Log in tempo reale (audit)
-sudo tail -f /var/lib/trafficserver/log/trafficserver/audit.log
+sudo tail -f /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
 
 # Verifica che la porta sia in ascolto
 sudo ss -tlnp | grep 8080
@@ -178,16 +178,16 @@ Con 10000 MB e rotazione attiva, i file piu vecchi vengono cancellati automatica
 
 ```bash
 # Ultime 10 righe
-sudo tail -10 /var/lib/trafficserver/log/trafficserver/audit.log
+sudo tail -10 /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
 
 # Cercare un IP specifico
-sudo grep "192.168.89.55" /var/lib/trafficserver/log/trafficserver/audit.log
+sudo grep "192.168.89.55" /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
 
 # Cercare 403 (accessi negati)
-sudo grep " 403 " /var/lib/trafficserver/log/trafficserver/audit.log
+sudo grep " 403 " /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
 
 # Contare richieste per FQDN
-sudo cut -d' ' -f8 /var/lib/trafficserver/log/trafficserver/audit.log | sort | uniq -c | sort -rn
+sudo cut -d' ' -f8 /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log | sort | uniq -c | sort -rn
 ```
 
 ---
@@ -262,7 +262,7 @@ sudo journalctl -u trafficserver --since "1 hour ago"
 sudo journalctl -u trafficserver -p warning
 
 # Diags log (interno ATS)
-sudo tail -50 /var/lib/trafficserver/log/trafficserver/diags.log
+sudo tail -50 /opt/trafficserver/opt/trafficserver/var/log/trafficserver/diags.log
 ```
 
 ---
@@ -334,9 +334,9 @@ sudo systemctl restart trafficserver
 
 ```bash
 sudo systemctl stop trafficserver
-sudo rm -f /var/lib/trafficserver/trafficserver/manager.lock
-sudo rm -f /var/lib/trafficserver/trafficserver/server.lock
-sudo rm -f /var/lib/trafficserver/trafficserver/*.sock
+sudo rm -f /opt/trafficserver/var/trafficserver/manager.lock
+sudo rm -f /opt/trafficserver/var/trafficserver/server.lock
+sudo rm -f /opt/trafficserver/var/trafficserver/*.sock
 sudo systemctl start trafficserver
 ```
 
@@ -359,14 +359,14 @@ grep url_remap /etc/trafficserver/records.config
 
 ```bash
 # Verificare che la directory esista
-sudo mkdir -p /var/lib/trafficserver/log/trafficserver
-sudo chown ats:ats /var/lib/trafficserver/log/trafficserver
+sudo mkdir -p /opt/trafficserver/var/trafficserver/log/trafficserver
+sudo chown ats:ats /opt/trafficserver/var/trafficserver/log/trafficserver
 
 # Riavviare
 sudo systemctl restart trafficserver
 
 # Controllare errori
-sudo grep -i "log\|error" /var/lib/trafficserver/log/trafficserver/diags.log | tail -10
+sudo grep -i "log\|error" /opt/trafficserver/opt/trafficserver/var/log/trafficserver/diags.log | tail -10
 ```
 
 ### Deny non funziona (IP bloccato naviga ancora)
@@ -456,7 +456,7 @@ echo 'CONFIG proxy.config.diags.debug.tags STRING http|dns|hostdb' | sudo tee -a
 sudo systemctl restart trafficserver
 
 # 4. Monitorare output
-sudo tail -f /var/lib/trafficserver/log/trafficserver/diags.log
+sudo tail -f /opt/trafficserver/opt/trafficserver/var/log/trafficserver/diags.log
 sudo journalctl -u trafficserver -f
 ```
 
@@ -515,10 +515,10 @@ L'IP del client e considerato **dato personale** ai sensi del GDPR (Art. 4.1). I
 
 ```bash
 # Estraggo tutte le richieste di un IP specifico
-sudo grep "^192.168.89.55 " /var/lib/trafficserver/log/trafficserver/audit.log*
+sudo grep "^192.168.89.55 " /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log*
 
 # Con timestamp leggibile e ordinamento
-sudo grep "^192.168.89.55 " /var/lib/trafficserver/log/trafficserver/audit.log* | sort -t'[' -k2
+sudo grep "^192.168.89.55 " /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log* | sort -t'[' -k2
 ```
 
 ### Procedura diritto di cancellazione (GDPR Art. 17)
@@ -528,17 +528,17 @@ sudo grep "^192.168.89.55 " /var/lib/trafficserver/log/trafficserver/audit.log* 
 sudo systemctl stop trafficserver
 
 # 2. Rimuovere le righe dell'IP dai log (IN PLACE)
-sudo sed -i '/^192.168.89.55 /d' /var/lib/trafficserver/log/trafficserver/audit.log
+sudo sed -i '/^192.168.89.55 /d' /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
 
 # 3. Verificare
-sudo grep "192.168.89.55" /var/lib/trafficserver/log/trafficserver/audit.log
+sudo grep "192.168.89.55" /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
 # Atteso: nessun output
 
 # 4. Riavviare
 sudo systemctl start trafficserver
 
 # NOTA: Per log ruotati (.old), applicare sed anche su quelli:
-sudo sed -i '/^192.168.89.55 /d' /var/lib/trafficserver/log/trafficserver/audit.log.old
+sudo sed -i '/^192.168.89.55 /d' /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log.old
 ```
 
 ### Anonimizzazione IP (GDPR by design)
@@ -577,16 +577,16 @@ Per ridurre il rischio GDPR, valutare l'anonimizzazione degli IP nei log prima d
 ```bash
 # === FASE 1: DETECTION ===
 # Identificare l'anomalia
-sudo tail -100 /var/lib/trafficserver/log/trafficserver/audit.log | grep -c " 403 "
+sudo tail -100 /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log | grep -c " 403 "
 sudo journalctl -u trafficserver -p err --since "1 hour ago"
 sudo /opt/trafficserver/bin/traffic_ctl metric get proxy.process.http.incoming_requests
 
 # === FASE 2: ANALYSIS ===
 # Determinare IP malevolo
-sudo grep " 403 " /var/lib/trafficserver/log/trafficserver/audit.log | cut -d' ' -f1 | sort | uniq -c | sort -rn | head -20
+sudo grep " 403 " /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log | cut -d' ' -f1 | sort | uniq -c | sort -rn | head -20
 
 # Identificare pattern (es. brute force, scan)
-sudo grep "192.168.89.99" /var/lib/trafficserver/log/trafficserver/audit.log | cut -d' ' -f6 | sort | uniq -c | sort -rn
+sudo grep "192.168.89.99" /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log | cut -d' ' -f6 | sort | uniq -c | sort -rn
 
 # === FASE 3: CONTAINMENT ===
 # Blocco immediato IP malevolo
@@ -601,7 +601,7 @@ sudo ufw deny from 192.168.89.99 to any port 8080 proto tcp
 # === FASE 4: EVIDENCE PRESERVATION ===
 # Backup immediato log e config
 sudo tar czf /root/incident-$(date +%Y%m%d-%H%M).tar.gz \
-  /var/lib/trafficserver/log/trafficserver/ \
+  /opt/trafficserver/opt/trafficserver/var/log/trafficserver/ \
   /etc/trafficserver/ \
   /var/log/auth.log
 ```
@@ -679,7 +679,7 @@ echo "Periodo: ultimi 6 mesi" >> "$OUTPUT"
 echo "" >> "$OUTPUT"
 echo "=== LOG ACCESSO PROXY ===" >> "$OUTPUT"
 
-sudo grep "^$IP " /var/lib/trafficserver/log/trafficserver/audit.log* >> "$OUTPUT" 2>/dev/null
+sudo grep "^$IP " /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log* >> "$OUTPUT" 2>/dev/null
 
 echo "" >> "$OUTPUT"
 echo "=== FINE RAPPORTO ===" >> "$OUTPUT"
@@ -696,7 +696,7 @@ cat "$OUTPUT"
 # Uso: sudo bash gdpr-delete.sh 192.168.89.55
 
 IP="$1"
-LOGDIR="/var/lib/trafficserver/log/trafficserver"
+LOGDIR="/opt/trafficserver/var/trafficserver/log/trafficserver"
 BACKUP="/root/gdpr-delete-backup-$(date +%Y%m%d-%H%M).tar.gz"
 
 echo "=== CANCELLAZIONE DATI PERSONALI ==="

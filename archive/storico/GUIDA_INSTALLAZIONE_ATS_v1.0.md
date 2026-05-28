@@ -104,8 +104,8 @@ ls -la configure  # Deve esistere
   --sbindir=/opt/trafficserver/bin \
   --libexecdir=/opt/trafficserver/lib/modules \
   --sysconfdir=/etc/trafficserver \
-  --sharedstatedir=/var/lib/trafficserver \
-  --localstatedir=/var/lib/trafficserver \
+  --sharedstatedir=/opt/trafficserver/var/trafficserver \
+  --localstatedir=/opt/trafficserver/var/trafficserver \
   --runstatedir=/run/trafficserver \
   --with-user=ats \
   --with-group=ats \
@@ -152,11 +152,11 @@ ls -la /opt/trafficserver/bin/traffic_server
 # Ownership a utente ats
 sudo chown -R ats:ats /opt/trafficserver
 sudo chown -R ats:ats /etc/trafficserver
-sudo chown -R ats:ats /var/lib/trafficserver
+sudo chown -R ats:ats /opt/trafficserver/var/trafficserver
 
 # Directory runtime e log
-sudo mkdir -p /run/trafficserver /var/log/trafficserver /var/lib/trafficserver/cache
-sudo chown ats:ats /run/trafficserver /var/log/trafficserver /var/lib/trafficserver/cache
+sudo mkdir -p /run/trafficserver /opt/trafficserver/var/log/trafficserver /opt/trafficserver/var/trafficserver/cache
+sudo chown ats:ats /run/trafficserver /opt/trafficserver/var/log/trafficserver /opt/trafficserver/var/trafficserver/cache
 ```
 
 ---
@@ -308,7 +308,7 @@ EOF
 
 ```bash
 sudo tee /etc/trafficserver/storage.config > /dev/null << 'EOF'
-/var/lib/trafficserver/cache 10G
+/opt/trafficserver/var/trafficserver/cache 10G
 EOF
 ```
 
@@ -384,7 +384,7 @@ curl -x http://localhost:8080 -I https://www.example.com
 # Atteso: HTTP/1.1 200 Connection established (tunnel)
 
 # 4. Verifica log
-sudo ls -la /var/lib/trafficserver/log/trafficserver/
+sudo ls -la /opt/trafficserver/opt/trafficserver/var/log/trafficserver/
 # Atteso: audit.log, diags.log, manager.log
 
 # 5. Verifica sintassi config
@@ -438,7 +438,7 @@ sudo sysctl -p
 
 ```bash
 sudo chmod 640 /etc/trafficserver/*.config /etc/trafficserver/*.yaml
-sudo chown -R ats:ats /etc/trafficserver /var/lib/trafficserver /var/log/trafficserver
+sudo chown -R ats:ats /etc/trafficserver /opt/trafficserver/var/trafficserver /opt/trafficserver/var/log/trafficserver
 ```
 
 ### 10.4 Hardening SSH
@@ -550,7 +550,7 @@ SyslogIdentifier=trafficserver
 # Hardening systemd
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/etc/trafficserver /var/lib/trafficserver /var/log/trafficserver /run/trafficserver
+ReadWritePaths=/etc/trafficserver /opt/trafficserver/var/trafficserver /opt/trafficserver/var/log/trafficserver /run/trafficserver
 ReadOnlyPaths=/opt/trafficserver
 PrivateTmp=true
 PrivateDevices=true
@@ -575,14 +575,14 @@ sudo systemctl restart trafficserver
 |----------|-------|-----------|
 | `404 Not Found` dal proxy | `url_remap.remap_required` non impostato a 0 | Aggiungere `CONFIG proxy.config.url_remap.remap_required INT 0` |
 | `configure: error: Cannot find pcre` | Manca `libpcre3-dev` | `sudo apt install libpcre3-dev` |
-| Log non creati | Directory log mancante | `sudo mkdir -p /var/lib/trafficserver/log/trafficserver && sudo chown ats:ats /var/lib/trafficserver/log/trafficserver` |
-| Servizio non parte (status: inactive) | Lock file da processo precedente | `sudo rm -f /var/lib/trafficserver/trafficserver/manager.lock /var/lib/trafficserver/trafficserver/server.lock` |
+| Log non creati | Directory log mancante | `sudo mkdir -p /opt/trafficserver/var/trafficserver/log/trafficserver && sudo chown ats:ats /opt/trafficserver/var/trafficserver/log/trafficserver` |
+| Servizio non parte (status: inactive) | Lock file da processo precedente | `sudo rm -f /opt/trafficserver/var/trafficserver/manager.lock /opt/trafficserver/var/trafficserver/server.lock` |
 | Deny /32 NON blocca | **1) reload non basta, serve RESTART**; 2) allow /24 viene PRIMA del deny | `sudo systemctl restart trafficserver` + mettere deny PRIMA di allow |
-| `Can't acquire manager lockfile` | traffic_manager zombie | `sudo pkill -9 traffic_manager && sudo rm /var/lib/trafficserver/trafficserver/manager.lock` |
+| `Can't acquire manager lockfile` | traffic_manager zombie | `sudo pkill -9 traffic_manager && sudo rm /opt/trafficserver/var/trafficserver/manager.lock` |
 | `traffic_server: error while loading shared libraries` | ldconfig mancante | `sudo ldconfig` |
 | Log format vuoto dopo restart | `logging.yaml` ha priorita su `logs_xml.config` | Usare `logging.yaml` per il formato |
 | Connessione SSH persa dopo UFW | SSH non in allow list | Aggiungere `sudo ufw allow 22/tcp` PRIMA di `ufw enable` |
-| `traffic_server` aborted (core dump) | Lock file o socket sporchi | `sudo rm -f /var/lib/trafficserver/trafficserver/*.lock /var/lib/trafficserver/trafficserver/*.sock` |
+| `traffic_server` aborted (core dump) | Lock file o socket sporchi | `sudo rm -f /opt/trafficserver/var/trafficserver/*.lock /opt/trafficserver/var/trafficserver/*.sock` |
 
 ---
 
@@ -591,7 +591,7 @@ sudo systemctl restart trafficserver
 - [ ] Ubuntu 24.04 LTS verificato
 - [ ] ATS 9.2.13 compilato senza errori (SHA256 checksum verificato)
 - [ ] Utente `ats` esiste con shell `/usr/sbin/nologin`
-- [ ] Ownership `ats:ats` su `/opt/trafficserver`, `/etc/trafficserver`, `/var/lib/trafficserver`
+- [ ] Ownership `ats:ats` su `/opt/trafficserver`, `/etc/trafficserver`, `/opt/trafficserver/var/trafficserver`
 - [ ] `records.config` verificato: `url_remap.remap_required=0`, `reverse_proxy.enabled=0`
 - [ ] `ip_allow.yaml` contiene le subnet corrette (rimosso deny-all temporaneo)
 - [ ] `logging.yaml` con formato audit (FQDN + status)
@@ -620,7 +620,7 @@ sudo systemctl restart trafficserver
 
 # Log in tempo reale
 sudo journalctl -u trafficserver -f
-sudo tail -f /var/lib/trafficserver/log/trafficserver/audit.log
+sudo tail -f /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
 
 # Monitoraggio TUI
 /opt/trafficserver/bin/traffic_top
@@ -661,7 +661,7 @@ sudo tar czf ats-config-backup-$(date +%Y%m%d).tar.gz /etc/trafficserver/
    - Corretto: sequenza: deny incoming → allow SSH → allow proxy → enable
 
 7. **Lock file sporchi da restart brutali** bloccano l'avvio
-   - Corretto: `rm -f /var/lib/trafficserver/trafficserver/*.lock`
+   - Corretto: `rm -f /opt/trafficserver/var/trafficserver/*.lock`
 
 ---
 

@@ -370,7 +370,7 @@ compile_ats() {
   log "Configuring ATS..."
   autoreconf -if -q 2>/dev/null || true
 
-  local configure_opts="--prefix=/opt/trafficserver --sysconfdir=/etc/trafficserver --localstatedir=/var/lib/trafficserver --runstatedir=/run/trafficserver --with-user=ats --with-group=ats --disable-tests --disable-examples --disable-maintainer-mode"
+  local configure_opts="--prefix=/opt/trafficserver --sysconfdir=/etc/trafficserver --localstatedir=/opt/trafficserver/var/trafficserver --runstatedir=/run/trafficserver --with-user=ats --with-group=ats --disable-tests --disable-examples --disable-maintainer-mode"
 
   if [ "$OS" = "2404" ]; then
     ./configure $configure_opts --enable-pcre -q
@@ -393,10 +393,10 @@ compile_ats() {
 # ============================================================================
 configure_ats() {
   log "Creating directories..."
-  sudo mkdir -p /run/trafficserver /var/log/trafficserver /var/lib/trafficserver/cache
-  sudo mkdir -p /var/lib/trafficserver/log/trafficserver
-  sudo chown -R ats:ats /opt/trafficserver /etc/trafficserver /var/lib/trafficserver
-  sudo chown ats:ats /run/trafficserver /var/log/trafficserver
+  sudo mkdir -p /run/trafficserver /opt/trafficserver/var/log/trafficserver /opt/trafficserver/var/trafficserver/cache
+  sudo mkdir -p /opt/trafficserver/var/trafficserver/log/trafficserver
+  sudo chown -R ats:ats /opt/trafficserver /etc/trafficserver /opt/trafficserver/var/trafficserver
+  sudo chown ats:ats /run/trafficserver /opt/trafficserver/var/log/trafficserver
 
   log "Writing records.config..."
   sudo tee /etc/trafficserver/records.config > /dev/null << EOF
@@ -462,7 +462,7 @@ logging:
 EOF
 
   sudo touch /etc/trafficserver/remap.config
-  echo '/var/lib/trafficserver/cache 10G' | sudo tee /etc/trafficserver/storage.config > /dev/null
+  echo '/opt/trafficserver/var/trafficserver/cache 10G' | sudo tee /etc/trafficserver/storage.config > /dev/null
 
   sudo chown ats:ats /etc/trafficserver/*
   sudo chmod 640 /etc/trafficserver/*.config /etc/trafficserver/*.yaml
@@ -561,7 +561,7 @@ StandardError=journal
 SyslogIdentifier=trafficserver
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/etc/trafficserver /var/lib/trafficserver /var/log/trafficserver
+ReadWritePaths=/etc/trafficserver /opt/trafficserver/var/trafficserver /opt/trafficserver/var/log/trafficserver
 ReadOnlyPaths=/opt/trafficserver
 PrivateTmp=true
 PrivateDevices=true
@@ -623,7 +623,7 @@ bantime = 86400
 enabled = true
 port = ${PROXY_PORT}
 filter = ats-proxy
-logpath = /var/lib/trafficserver/log/trafficserver/diags.log
+logpath = /opt/trafficserver/var/log/trafficserver/diags.log
 maxretry = 5
 findtime = 300
 bantime = 3600
@@ -779,7 +779,7 @@ main() {
   log "Installation complete!"
   log "Proxy:  http://${IP%/*}:${PROXY_PORT}"
   log "Config: /etc/trafficserver/ats_proxy_filter.conf"
-  log "Logs:   /var/lib/trafficserver/log/trafficserver/audit.log"
+  log "Logs:   /opt/trafficserver/var/log/trafficserver/audit.log"
   log "Health: /var/log/ats-health.log"
   echo "============================================"
 }

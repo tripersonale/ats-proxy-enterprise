@@ -116,15 +116,15 @@ L'admin bypass viene valutato prima di DENY/WHITELIST/AUTH. Va testato da una ma
 Audit log:
 
 ```bash
-sudo tail -f /var/lib/trafficserver/log/trafficserver/audit.log
-sudo grep ' 403 ' /var/lib/trafficserver/log/trafficserver/audit.log
-sudo grep ' 407 ' /var/lib/trafficserver/log/trafficserver/audit.log
+sudo tail -f /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
+sudo grep ' 403 ' /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
+sudo grep ' 407 ' /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
 ```
 
 Diagnostics:
 
 ```bash
-sudo tail -f /var/lib/trafficserver/log/trafficserver/diags.log
+sudo tail -f /opt/trafficserver/opt/trafficserver/var/log/trafficserver/diags.log
 sudo journalctl -u trafficserver -n 100 --no-pager
 ```
 
@@ -177,8 +177,8 @@ sudo etckeeper commit 'Update ATS proxy policy'
 date -Is
 systemctl status trafficserver --no-pager
 sudo journalctl -u trafficserver -n 200 --no-pager
-sudo tail -200 /var/lib/trafficserver/log/trafficserver/diags.log
-sudo tail -200 /var/lib/trafficserver/log/trafficserver/audit.log
+sudo tail -200 /opt/trafficserver/opt/trafficserver/var/log/trafficserver/diags.log
+sudo tail -200 /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
 ```
 
 2. Bloccare IP client se necessario in `ip_allow.yaml` con deny prima dell'allow.

@@ -35,7 +35,7 @@ Percorsi installati:
 |------------|----------|
 | ATS | `/opt/trafficserver` |
 | Config | `/etc/trafficserver` |
-| Stato/cache/log | `/var/lib/trafficserver` |
+| Stato/cache/log | `/opt/trafficserver/var/trafficserver` |
 | Plugin | `/opt/trafficserver/libexec/trafficserver/ats_proxy_filter.so` |
 | Config plugin | `/etc/trafficserver/ats_proxy_filter.conf` |
 | Service | `/etc/systemd/system/trafficserver.service` |
@@ -139,7 +139,7 @@ Configure 24.04:
 
 ```bash
 ./configure --prefix=/opt/trafficserver --sysconfdir=/etc/trafficserver \
-  --localstatedir=/var/lib/trafficserver --runstatedir=/run/trafficserver \
+  --localstatedir=/opt/trafficserver/var/trafficserver --runstatedir=/run/trafficserver \
   --with-user=ats --with-group=ats --enable-pcre \
   --disable-tests --disable-examples --disable-maintainer-mode
 ```
@@ -149,7 +149,7 @@ Configure 26.04:
 ```bash
 export PKG_CONFIG_PATH=/usr/local/pcre/lib/pkgconfig
 ./configure --prefix=/opt/trafficserver --sysconfdir=/etc/trafficserver \
-  --localstatedir=/var/lib/trafficserver --runstatedir=/run/trafficserver \
+  --localstatedir=/opt/trafficserver/var/trafficserver --runstatedir=/run/trafficserver \
   --with-user=ats --with-group=ats --with-pcre=/usr/local/pcre \
   --disable-tests --disable-examples --disable-maintainer-mode
 ```
@@ -262,7 +262,7 @@ Restart=on-failure
 LimitNOFILE=65535
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/etc/trafficserver /var/lib/trafficserver /var/log/trafficserver
+ReadWritePaths=/etc/trafficserver /opt/trafficserver/var/trafficserver /opt/trafficserver/var/log/trafficserver
 ReadOnlyPaths=/opt/trafficserver
 PrivateTmp=true
 PrivateDevices=true

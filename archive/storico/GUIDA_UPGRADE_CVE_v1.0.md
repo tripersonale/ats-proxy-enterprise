@@ -219,7 +219,7 @@ autoreconf -if
 # 24.04:
 ./configure \
   --prefix=/opt/trafficserver --sysconfdir=/etc/trafficserver \
-  --localstatedir=/var/lib/trafficserver --runstatedir=/run/trafficserver \
+  --localstatedir=/opt/trafficserver/var/trafficserver --runstatedir=/run/trafficserver \
   --with-user=ats --with-group=ats --enable-pcre \
   --disable-tests --disable-examples --disable-maintainer-mode
 
@@ -227,7 +227,7 @@ autoreconf -if
 export PKG_CONFIG_PATH='/usr/local/pcre/lib/pkgconfig'
 ./configure \
   --prefix=/opt/trafficserver --sysconfdir=/etc/trafficserver \
-  --localstatedir=/var/lib/trafficserver --runstatedir=/run/trafficserver \
+  --localstatedir=/opt/trafficserver/var/trafficserver --runstatedir=/run/trafficserver \
   --with-user=ats --with-group=ats --with-pcre=/usr/local/pcre \
   --disable-tests --disable-examples --disable-maintainer-mode
 
@@ -270,7 +270,7 @@ curl -s -o /dev/null -w '%{http_code}' -x http://localhost:8080 https://httpbin.
 for i in $(seq 1 10); do curl -s -o /dev/null -w '%{http_code} ' -x http://localhost:8080 http://httpbin.org/ip & done; wait; echo ''
 
 # 5. Verifica log
-sudo tail -3 /var/lib/trafficserver/log/trafficserver/audit.log
+sudo tail -3 /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
 
 # 6. Verifica ACL
 # Ripetere batteria test ACL (Guida Installazione Sezione 14)
@@ -279,7 +279,7 @@ sudo tail -3 /var/lib/trafficserver/log/trafficserver/audit.log
 sudo /opt/trafficserver/bin/traffic_ctl metric get proxy.process.http.incoming_requests
 
 # 8. Verificare eventuali warning nei log
-sudo grep -i "warn\|error\|fail" /var/lib/trafficserver/log/trafficserver/diags.log | tail -20
+sudo grep -i "warn\|error\|fail" /opt/trafficserver/opt/trafficserver/var/log/trafficserver/diags.log | tail -20
 ```
 
 ---
@@ -325,8 +325,8 @@ ldd /opt/trafficserver/bin/traffic_server | grep "not found"
 
 ```bash
 # Se il servizio non parte dopo upgrade:
-sudo rm -f /var/lib/trafficserver/trafficserver/manager.lock
-sudo rm -f /var/lib/trafficserver/trafficserver/server.lock
+sudo rm -f /opt/trafficserver/var/trafficserver/manager.lock
+sudo rm -f /opt/trafficserver/var/trafficserver/server.lock
 sudo rm -f /run/trafficserver/*.sock
 # Poi riavviare
 ```
@@ -451,7 +451,7 @@ if [ "$FAIL_COUNT" = "0" ]; then echo "✅ All 200"; ((PASS++)); else echo "❌ 
 
 # Test 4: Log contiene FQDN
 echo -n "Test 4: Log FQDN... "
-LOG=$(sudo tail -3 /var/lib/trafficserver/log/trafficserver/audit.log 2>/dev/null)
+LOG=$(sudo tail -3 /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log 2>/dev/null)
 if echo "$LOG" | grep -q "httpbin.org"; then echo "✅ FQDN presente"; ((PASS++)); else echo "❌ FQDN assente"; ((FAIL++)); fi
 
 # Test 5: Porta in ascolto
@@ -509,7 +509,7 @@ sudo journalctl -u trafficserver --since "7 days ago" -p err --no-pager | tail -
 
 # 4. Spazio disco
 echo "Spazio disco:"
-df -h / /var/lib/trafficserver/cache
+df -h / /opt/trafficserver/var/trafficserver/cache
 
 # 5. Fail2ban
 echo "fail2ban SSH:"

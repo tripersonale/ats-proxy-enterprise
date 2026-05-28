@@ -190,7 +190,7 @@ ATS e compilato con:
 - `--disable-maintainer-mode`
 - Utente dedicato `ats` con shell `/usr/sbin/nologin`
 - File descriptor limitati via systemd (`LimitNOFILE=65535`)
-- Cache isolata in `/var/lib/trafficserver/cache`
+- Cache isolata in `/opt/trafficserver/var/trafficserver/cache`
 
 ---
 
@@ -199,7 +199,7 @@ ATS e compilato con:
 ATS ha due livelli di cache:
 
 1. **RAM cache**: 1 GB (configurabile via `ram_cache.size`). Contenuti piccoli e frequenti.
-2. **Disk cache**: 10 GB su `/var/lib/trafficserver/cache`. Contenuti piu grandi, persistente.
+2. **Disk cache**: 10 GB su `/opt/trafficserver/var/trafficserver/cache`. Contenuti piu grandi, persistente.
 
 Il contenuto viene servito da cache se:
 - Il metodo e GET o HEAD

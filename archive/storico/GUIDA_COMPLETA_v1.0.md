@@ -46,7 +46,7 @@ Client → UFW:8080 → ip_allow.yaml → ats_proxy_filter.so
 **Porte**: 8080 (HTTP), 8443 (TLS opzionale)  
 **Plugin**: `ats_proxy_filter.so` v2.1 — hook OS_DNS, config-based  
 **Credenziali**: Basic auth via `Proxy-Authorization` header  
-**Log**: `/var/lib/trafficserver/log/trafficserver/audit.log` → rsyslog/ELK
+**Log**: `/opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log` → rsyslog/ELK
 
 ---
 
@@ -115,7 +115,7 @@ sudo ldconfig
 ```bash
 cd /tmp/trafficserver-9.2.13
 ./configure --prefix=/opt/trafficserver --sysconfdir=/etc/trafficserver \
-  --localstatedir=/var/lib/trafficserver --runstatedir=/run/trafficserver \
+  --localstatedir=/opt/trafficserver/var/trafficserver --runstatedir=/run/trafficserver \
   --with-user=ats --with-group=ats --enable-pcre \
   --disable-tests --disable-examples --disable-maintainer-mode
 ```
@@ -124,7 +124,7 @@ cd /tmp/trafficserver-9.2.13
 ```bash
 cd /tmp/trafficserver-9.2.13
 ./configure --prefix=/opt/trafficserver --sysconfdir=/etc/trafficserver \
-  --localstatedir=/var/lib/trafficserver --runstatedir=/run/trafficserver \
+  --localstatedir=/opt/trafficserver/var/trafficserver --runstatedir=/run/trafficserver \
   --with-user=ats --with-group=ats --with-pcre=/usr/local/pcre \
   --disable-tests --disable-examples --disable-maintainer-mode
 ```
@@ -143,9 +143,9 @@ sudo ldconfig
 ## 4. Configurazione base
 
 ```bash
-sudo mkdir -p /run/trafficserver /var/log/trafficserver /var/lib/trafficserver/cache
-sudo mkdir -p /var/lib/trafficserver/log/trafficserver
-sudo chown -R ats:ats /opt/trafficserver /etc/trafficserver /var/lib/trafficserver /run/trafficserver /var/log/trafficserver
+sudo mkdir -p /run/trafficserver /opt/trafficserver/var/log/trafficserver /opt/trafficserver/var/trafficserver/cache
+sudo mkdir -p /opt/trafficserver/var/trafficserver/log/trafficserver
+sudo chown -R ats:ats /opt/trafficserver /etc/trafficserver /opt/trafficserver/var/trafficserver /run/trafficserver /opt/trafficserver/var/log/trafficserver
 ```
 
 ### 4.1 records.config
@@ -226,7 +226,7 @@ EOF
 
 ```bash
 sudo touch /etc/trafficserver/remap.config /etc/trafficserver/storage.config
-echo '/var/lib/trafficserver/cache 10G' | sudo tee /etc/trafficserver/storage.config
+echo '/opt/trafficserver/var/trafficserver/cache 10G' | sudo tee /etc/trafficserver/storage.config
 sudo chown ats:ats /etc/trafficserver/*
 sudo chmod 640 /etc/trafficserver/*.config /etc/trafficserver/*.yaml
 ```
@@ -261,7 +261,7 @@ StandardError=journal
 SyslogIdentifier=trafficserver
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/etc/trafficserver /var/lib/trafficserver /var/log/trafficserver
+ReadWritePaths=/etc/trafficserver /opt/trafficserver/var/trafficserver /opt/trafficserver/var/log/trafficserver
 ReadOnlyPaths=/opt/trafficserver
 PrivateTmp=true
 PrivateDevices=true
@@ -531,7 +531,7 @@ findtime = 3600
 enabled = true
 port = 8080
 filter = ats-proxy
-logpath = /var/lib/trafficserver/log/trafficserver/diags.log
+logpath = /opt/trafficserver/opt/trafficserver/var/log/trafficserver/diags.log
 maxretry = 5
 findtime = 300
 bantime = 3600
@@ -633,8 +633,8 @@ profile ats_traffic_server /opt/trafficserver/bin/traffic_server {
   #include <abstractions/nameservice>
   /opt/trafficserver/** mr,
   /etc/trafficserver/** rw,
-  /var/lib/trafficserver/** rw,
-  /var/log/trafficserver/** rw,
+  /opt/trafficserver/var/trafficserver/** rw,
+  /opt/trafficserver/var/log/trafficserver/** rw,
   /run/trafficserver/** rw,
   /usr/local/pcre/lib/** mr,
   /dev/urandom r,
@@ -667,7 +667,7 @@ sudo aa-enforce /opt/trafficserver/bin/traffic_server
 | `404 Not Found` | `url_remap.remap_required=1` | Impostare a `0` in records.config |
 | `libpcre.so.1: cannot open` | PCRE1 non in ldconfig (26.04) | `echo '/usr/local/pcre/lib' \| sudo tee /etc/ld.so.conf.d/pcre.conf && sudo ldconfig` |
 | `configure: error: Cannot find pcre` | PCRE1 assente | 24.04: `apt install libpcre3-dev`<br>26.04: compilare PCRE1 da sorgente (Sez. 3.2) |
-| Servizio non parte | Lock file da crash precedente | `rm -f /var/lib/trafficserver/trafficserver/*.lock` |
+| Servizio non parte | Lock file da crash precedente | `rm -f /opt/trafficserver/var/trafficserver/*.lock` |
 | Deny non blocca | Solo reload, o ordine invertito | `systemctl restart` + deny PRIMA di allow |
 | `000` / connection timeout | Ownership config sbagliata | `chown ats:ats /etc/trafficserver/*` |
 | `Empty reply from server` | AppArmor blocca librerie | Rimuovere profilo: `sudo aa-remove-unknown` |
@@ -690,7 +690,7 @@ sudo systemctl restart trafficserver
 sudo /opt/trafficserver/bin/traffic_ctl config reload  # solo remap
 
 # Log in tempo reale
-sudo tail -f /var/lib/trafficserver/log/trafficserver/audit.log
+sudo tail -f /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
 sudo journalctl -u trafficserver -f
 
 # Metriche
@@ -714,7 +714,7 @@ sudo fail2ban-client set ats-proxy unbanip <IP>
 
 # Riavvio pulito (se lock file bloccano)
 sudo systemctl stop trafficserver
-sudo rm -f /var/lib/trafficserver/trafficserver/*.lock /var/lib/trafficserver/trafficserver/host.db
+sudo rm -f /opt/trafficserver/var/trafficserver/*.lock /opt/trafficserver/var/trafficserver/host.db
 sudo systemctl start trafficserver
 
 # Verifica CVE e versioni librerie

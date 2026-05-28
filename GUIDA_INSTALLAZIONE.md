@@ -237,7 +237,7 @@ ls -la configure  # Deve esistere
 ./configure \
   --prefix=/opt/trafficserver \
   --sysconfdir=/etc/trafficserver \
-  --localstatedir=/var/lib/trafficserver \
+  --localstatedir=/opt/trafficserver/var/trafficserver \
   --runstatedir=/run/trafficserver \
   --with-user=ats --with-group=ats \
   --enable-pcre \
@@ -251,7 +251,7 @@ export PKG_CONFIG_PATH='/usr/local/pcre/lib/pkgconfig'
 ./configure \
   --prefix=/opt/trafficserver \
   --sysconfdir=/etc/trafficserver \
-  --localstatedir=/var/lib/trafficserver \
+  --localstatedir=/opt/trafficserver/var/trafficserver \
   --runstatedir=/run/trafficserver \
   --with-user=ats --with-group=ats \
   --with-pcre=/usr/local/pcre \
@@ -286,11 +286,11 @@ ls -la /opt/trafficserver/bin/traffic_server
 ## 7. Permessi e Directory
 
 ```bash
-sudo chown -R ats:ats /opt/trafficserver /etc/trafficserver /var/lib/trafficserver
-sudo mkdir -p /run/trafficserver /var/log/trafficserver /var/lib/trafficserver/cache
-sudo mkdir -p /var/lib/trafficserver/log/trafficserver
-sudo chown ats:ats /run/trafficserver /var/log/trafficserver /var/lib/trafficserver/cache
-sudo chown ats:ats /var/lib/trafficserver/log/trafficserver
+sudo chown -R ats:ats /opt/trafficserver /etc/trafficserver /opt/trafficserver/var/trafficserver
+sudo mkdir -p /run/trafficserver /opt/trafficserver/var/log/trafficserver /opt/trafficserver/var/trafficserver/cache
+sudo mkdir -p /opt/trafficserver/var/trafficserver/log/trafficserver
+sudo chown ats:ats /run/trafficserver /opt/trafficserver/var/log/trafficserver /opt/trafficserver/var/trafficserver/cache
+sudo chown ats:ats /opt/trafficserver/var/trafficserver/log/trafficserver
 ```
 
 ---
@@ -408,7 +408,7 @@ Output: `IP_client - [timestamp] "METHOD URL HTTP/1.x" STATUS BYTES FQDN BACKEND
 
 ```bash
 sudo tee /etc/trafficserver/storage.config > /dev/null << 'EOF'
-/var/lib/trafficserver/cache 10G
+/opt/trafficserver/var/trafficserver/cache 10G
 EOF
 
 sudo touch /etc/trafficserver/remap.config
@@ -419,7 +419,7 @@ sudo touch /etc/trafficserver/remap.config
 ```bash
 sudo chown ats:ats /etc/trafficserver/*
 sudo chmod 640 /etc/trafficserver/*.config /etc/trafficserver/*.yaml
-sudo chown -R ats:ats /var/lib/trafficserver /var/log/trafficserver
+sudo chown -R ats:ats /opt/trafficserver/var/trafficserver /opt/trafficserver/var/log/trafficserver
 ```
 
 ---
@@ -512,7 +512,7 @@ SyslogIdentifier=trafficserver
 # Hardening
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/etc/trafficserver /var/lib/trafficserver /var/log/trafficserver
+ReadWritePaths=/etc/trafficserver /opt/trafficserver/var/trafficserver /opt/trafficserver/var/log/trafficserver
 ReadOnlyPaths=/opt/trafficserver
 PrivateTmp=true
 PrivateDevices=true
@@ -551,7 +551,7 @@ curl -s -o /dev/null -w '%{http_code}' -x http://localhost:8080 https://httpbin.
 # Atteso: 200
 
 # 4. Log audit
-sudo tail -3 /var/lib/trafficserver/log/trafficserver/audit.log
+sudo tail -3 /opt/trafficserver/var/log/trafficserver/audit.log
 # Atteso: contiene IP client, FQDN, status
 
 # 5. Sintassi config
@@ -660,7 +660,7 @@ findtime = 3600
 enabled = true
 port = 8080
 filter = ats-proxy
-logpath = /var/lib/trafficserver/log/trafficserver/diags.log
+logpath = /opt/trafficserver/var/log/trafficserver/diags.log
 maxretry = 5
 findtime = 300
 bantime = 3600
@@ -812,8 +812,8 @@ Risultati verificati su **VM135 (24.04)** e **VM136 (26.04)** il 26 Maggio 2026.
 |----------|-------|-----------|
 | `404 Not Found` | `url_remap.remap_required=1` | Impostare a `0` in records.config |
 | `configure: error: Cannot find pcre` | PCRE1 mancante | 24.04: `apt install libpcre3-dev`<br>26.04: compilare PCRE1 da sorgente (Sez. 5) |
-| Log non creati | Directory mancante | `mkdir -p /var/lib/trafficserver/log/trafficserver` |
-| Servizio non parte | Lock file da crash precedente | `rm -f /var/lib/trafficserver/trafficserver/*.lock` |
+| Log non creati | Directory mancante | `mkdir -p /opt/trafficserver/var/trafficserver/log/trafficserver` |
+| Servizio non parte | Lock file da crash precedente | `rm -f /opt/trafficserver/var/trafficserver/*.lock` |
 | Deny non blocca | Solo reload | **`systemctl restart` obbligatorio** |
 | Deny non blocca | Allow /24 prima di deny /32 | Invertire ordine: deny PRIMA |
 | `000` / connection timeout | Ownership config sbagliata | `chown ats:ats /etc/trafficserver/*` |
@@ -832,7 +832,7 @@ Risultati verificati su **VM135 (24.04)** e **VM136 (26.04)** il 26 Maggio 2026.
 - [ ] OS verificato (`lsb_release -a`)
 - [ ] ATS 9.2.13 compilato, SHA512 verificato
 - [ ] Utente `ats` con shell `/usr/sbin/nologin`
-- [ ] Ownership `ats:ats` su `/opt`, `/etc/trafficserver`, `/var/lib/trafficserver`
+- [ ] Ownership `ats:ats` su `/opt`, `/etc/trafficserver`, `/opt/trafficserver/var/trafficserver`
 - [ ] `url_remap.remap_required=0`, `reverse_proxy.enabled=0`
 - [ ] `ip_allow.yaml` con subnet corrette, deny PRIMA di allow (se applicabile)
 - [ ] `logging.yaml` con FQDN e status
@@ -884,7 +884,7 @@ sudo /opt/trafficserver/bin/traffic_ctl config reload
 
 # Log in tempo reale
 sudo journalctl -u trafficserver -f
-sudo tail -f /var/lib/trafficserver/log/trafficserver/audit.log
+sudo tail -f /opt/trafficserver/var/log/trafficserver/audit.log
 sudo tail -f /var/log/ats-health.log
 
 # Monitoraggio

@@ -131,7 +131,7 @@ echo "=== ADMIN BYPASS ===" && curl -sI -o /dev/null -w "%{http_code}" --connect
 ### 4.2 Verifica log
 
 ```bash
-sudo tail -5 /var/lib/trafficserver/log/trafficserver/audit.log
+sudo tail -5 /opt/trafficserver/opt/trafficserver/var/log/trafficserver/audit.log
 # I 403 e 407 appaiono nel log con FQDN
 ```
 
