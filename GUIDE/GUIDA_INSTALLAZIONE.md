@@ -66,6 +66,14 @@ sudo sed -i 's/CONFIG proxy.config.url_remap.remap_required INT 1/CONFIG proxy.c
 
 ## 5. Avvia e verifica L0
 
+Prima di avviare, crea la directory dei log con i permessi corretti:
+
+```bash
+sudo mkdir -p /var/log/trafficserver
+sudo chown ats:ats /var/log/trafficserver
+sudo chmod 755 /var/log/trafficserver
+```
+
 ```bash
 sudo /opt/trafficserver/bin/trafficserver start
 sleep 4
@@ -138,7 +146,7 @@ sudo tee /etc/fail2ban/jail.d/ats-proxy.local << 'EOF' > /dev/null
 enabled = true
 port = 8080
 filter = ats-proxy
-logpath = /opt/trafficserver/var/log/trafficserver/diags.log
+logpath = /var/log/trafficserver/diags.log
 maxretry = 10
 findtime = 60
 bantime = 600
@@ -186,7 +194,7 @@ sudo bash scripts/ats-ctl reload
 | Config ATS | `/opt/trafficserver/etc/trafficserver/` |
 | Plugin `.so` | `/opt/trafficserver/libexec/trafficserver/ats_proxy_filter_v30.so` |
 | Config plugin | `/etc/trafficserver/plugin/` |
-| Log | `/opt/trafficserver/var/log/trafficserver/diags.log` |
+| Log | `/var/log/trafficserver/diags.log` |
 | Systemd | `systemctl restart trafficserver` |
 | Man pages | `man ats-ctl` · `man ats-proxy-filter` |
 
@@ -199,5 +207,5 @@ sudo ats-ctl deny add dominio
 sudo ats-ctl user add nome
 sudo ats-ctl mode auth_nd
 sudo ats-ctl reload
-sudo tail -f /opt/trafficserver/var/log/trafficserver/diags.log
+sudo tail -f /var/log/trafficserver/diags.log
 ```

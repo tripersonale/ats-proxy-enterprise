@@ -50,4 +50,4 @@ ss -tlnp 2>/dev/null | grep -E 'traffic|8080|8443' || echo "no ATS ports found"
 
 echo ""
 echo "--- Last log errors ---"
-tail -5 /opt/trafficserver/var/log/trafficserver/diags.log 2>/dev/null || echo "diags.log not accessible"
+tail -5 /var/log/trafficserver/diags.log 2>/dev/null || echo "diags.log not accessible"

@@ -280,7 +280,7 @@ sleep 4
 ```bash
 # Verifica che il plugin sia caricato
 sudo grep "ats_proxy_filter_v30.*plugin loaded" \
-  /opt/trafficserver/var/log/trafficserver/diags.log | tail -1
+  /var/log/trafficserver/diags.log | tail -1
 
 # Testa tutti i mode
 for mode in off deny whitelist auth_all auth_nd; do
