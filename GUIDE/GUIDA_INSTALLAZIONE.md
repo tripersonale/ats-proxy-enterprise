@@ -82,6 +82,12 @@ curl -s -o /dev/null -w '%{http_code}\n' --connect-timeout 5 \
 ```
 **Atteso**: `200`
 
+> **Nota sui log**: ATS scrive i log in `/opt/trafficserver/var/log/trafficserver/` (path
+> di default da `--prefix`). Per usarli da `/var/log/trafficserver/`, crea un symlink:
+> ```bash
+> sudo ln -sf /opt/trafficserver/var/log/trafficserver /var/log/trafficserver
+> ```
+
 ## 6. Compila plugin v3
 
 📁 `cd ~/ats-proxy-enterprise`
