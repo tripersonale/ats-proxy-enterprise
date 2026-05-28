@@ -1,0 +1,12 @@
+Package: ats-proxy-enterprise
+Version: 3.0-beta-1
+Section: net
+Priority: optional
+Architecture: amd64
+Depends: ats-core (>= 9.2.13), ats-proxy-plugin (>= 3.0-beta), ats-proxy-hardening (>= 3.0-beta)
+Maintainer: ATS Proxy Enterprise <proxy@tripersonale.org>
+Homepage: https://github.com/tripersonale/ats-proxy-enterprise
+Description: ATS Proxy Enterprise v3.0 — forward proxy with filtering, auth and hardening
+ Meta-package that installs ats-core, ats-proxy-plugin, and ats-proxy-hardening.
+ Provides a complete forward proxy with URL filtering, Basic Auth, and 25-point
+ hardening profile. One command for the full stack.

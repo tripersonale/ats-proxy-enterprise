@@ -1,0 +1,66 @@
+#!/bin/bash
+set -e
+# ats-proxy-hardening postinst: UFW rules, fail2ban config, health check, CVE helper
+
+RESULT=0
+PROXY_PORT=8080
+
+# UFW rules (add if UFW is active and port not already allowed)
+if command -v ufw >/dev/null 2>&1; then
+  ufw status | grep -q 'Status: active' || ufw --force enable
+  ufw status | grep -q "${PROXY_PORT}/tcp" || \
+    ufw allow from 192.168.89.0/24 to any port ${PROXY_PORT} proto tcp comment ats-proxy
+  ufw status | grep -q '22/tcp' || \
+    ufw allow from 192.168.89.0/24 to any port 22 proto tcp comment ssh-admin
+fi
+
+# fail2ban ats-proxy filter
+if command -v fail2ban-client >/dev/null 2>&1; then
+  cat > /etc/fail2ban/filter.d/ats-proxy.conf << 'EOF'
+[Definition]
+failregex = AUTH FAIL user=.* from=<HOST>
+ignoreregex =
+EOF
+  cat > /etc/fail2ban/jail.d/ats-proxy.local << 'EOF'
+[ats-proxy]
+enabled = true
+port = 8080
+filter = ats-proxy
+logpath = /opt/trafficserver/var/log/trafficserver/diags.log
+maxretry = 10
+findtime = 60
+bantime = 600
+EOF
+  systemctl restart fail2ban
+fi
+
+# Health check
+cat > /opt/ats_health.sh << 'EOF'
+#!/bin/bash
+set -euo pipefail
+if ! /opt/trafficserver/bin/trafficserver status | grep -q 'traffic_server is running'; then
+  /opt/trafficserver/bin/trafficserver restart
+fi
+EOF
+chmod 0750 /opt/ats_health.sh
+touch /var/log/ats-health.log
+chmod 0640 /var/log/ats-health.log
+getent group ats >/dev/null && chgrp ats /var/log/ats-health.log 2>/dev/null || true
+(crontab -l 2>/dev/null | grep -v '/opt/ats_health.sh' || true
+ echo '* * * * * /opt/ats_health.sh >> /var/log/ats-health.log 2>&1') | crontab -
+
+# CVE helper
+cat > /opt/cve-check.sh << 'CEOF'
+#!/bin/bash
+set -euo pipefail
+printf '[CVE] %s | ATS %s | OS %s\n' "$(date -Is)" \
+  "$(/opt/trafficserver/bin/traffic_server -V 2>/dev/null | head -1)" \
+  "$(lsb_release -ds)" >> /var/log/ats-cve.log 2>/dev/null || true
+CEOF
+chmod 0750 /opt/cve-check.sh
+
+# etckeeper
+if command -v etckeeper >/dev/null 2>&1; then
+  etckeeper init 2>/dev/null || true
+  etckeeper commit "ats-proxy-hardening postinst" 2>/dev/null || true
+fi

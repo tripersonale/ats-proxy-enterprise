@@ -1,0 +1,23 @@
+#!/bin/bash
+set -e
+# ats-core postinst: create ats user, set permissions, enable systemd
+
+ATS_USER=ats
+ATS_GROUP=ats
+ATS_PREFIX=/opt/trafficserver
+
+getent group "$ATS_GROUP" >/dev/null || groupadd --system "$ATS_GROUP"
+id "$ATS_USER" >/dev/null || useradd --system --gid "$ATS_GROUP" \
+  --home-dir "${ATS_PREFIX}/var/trafficserver" --shell /usr/sbin/nologin "$ATS_USER"
+
+# Permissions
+chown -R root:root "${ATS_PREFIX}"
+install -d -o "$ATS_USER" -g "$ATS_GROUP" -m 0750 \
+  "${ATS_PREFIX}/var/trafficserver" "${ATS_PREFIX}/var/log/trafficserver"
+chown -R "$ATS_USER:$ATS_GROUP" \
+  "${ATS_PREFIX}/var/trafficserver" "${ATS_PREFIX}/var/log/trafficserver"
+chgrp -R "$ATS_GROUP" "${ATS_PREFIX}/etc/trafficserver" 2>/dev/null || true
+chmod 0640 "${ATS_PREFIX}/etc/trafficserver"/* 2>/dev/null || true
+
+systemctl daemon-reload
+systemctl enable trafficserver 2>/dev/null || true

@@ -1,0 +1,12 @@
+Package: ats-core
+Version: 9.2.13-1
+Section: net
+Priority: optional
+Architecture: amd64
+Depends: libssl3, zlib1g, libpcre3, libcap2, libhwloc15, libunwind8, libcurl4, tcl
+Maintainer: ATS Proxy Enterprise <proxy@tripersonale.org>
+Homepage: https://github.com/tripersonale/ats-proxy-enterprise
+Description: Apache Traffic Server 9.2.13 LTS forward proxy core
+ ATS 9.2.13 LTS compiled for Ubuntu 26.04, installed in /opt/trafficserver.
+ Includes PCRE1 8.45 and default records.yaml configured as open forward proxy.
+ This package provides the proxy engine without plugin or hardening.

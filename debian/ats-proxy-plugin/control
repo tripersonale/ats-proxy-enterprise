@@ -1,0 +1,12 @@
+Package: ats-proxy-plugin
+Version: 3.0-beta-1
+Section: net
+Priority: optional
+Architecture: amd64
+Depends: ats-core (>= 9.2.13), libssl3
+Maintainer: ATS Proxy Enterprise <proxy@tripersonale.org>
+Homepage: https://github.com/tripersonale/ats-proxy-enterprise
+Description: ATS Proxy Enterprise v3.0 URL filtering and auth plugin
+ Plugin with 5 modes (off, deny, whitelist, auth_all, auth_nd),
+ salted SHA-256 password storage, IPv6 support.
+ Includes ats-ctl CLI for policy management and ats-mode-test.sh.

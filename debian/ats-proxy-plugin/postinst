@@ -1,0 +1,27 @@
+#!/bin/bash
+set -e
+# ats-proxy-plugin postinst: install plugin .so, config, ats-ctl, man pages
+
+PLUGIN_DIR=/opt/trafficserver/libexec/trafficserver
+CONFIG_DIR=/etc/ats-proxy
+TEMPLATE_DIR=/usr/share/ats-proxy/config
+
+# Install plugin binary
+install -m 0644 /usr/share/ats-proxy/ats_proxy_filter_v30.so "${PLUGIN_DIR}/ats_proxy_filter_v30.so"
+
+# Init plugin config if not present
+install -d -m 0750 "$CONFIG_DIR"
+for f in filter.conf deny.list whitelist.list admin.list auth.conf; do
+  [ -f "${CONFIG_DIR}/${f}" ] || install -m 0640 "${TEMPLATE_DIR}/${f}.example" "${CONFIG_DIR}/${f}"
+done
+
+# Fix ownership
+getent group trafficserver >/dev/null && chgrp -R trafficserver "$CONFIG_DIR" 2>/dev/null || true
+getent group ats >/dev/null && chgrp -R ats "$CONFIG_DIR" 2>/dev/null || true
+chmod 0750 "$CONFIG_DIR"
+
+# Register plugin with ATS if not already present
+if [ -f /opt/trafficserver/etc/trafficserver/plugin.config ]; then
+  grep -q 'ats_proxy_filter_v30.so' /opt/trafficserver/etc/trafficserver/plugin.config || \
+    echo 'ats_proxy_filter_v30.so' >> /opt/trafficserver/etc/trafficserver/plugin.config
+fi
