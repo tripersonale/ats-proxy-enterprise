@@ -1,0 +1,14 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    "../../../CULLA/AGENTS.md",
+    "../../../CULLA/.opencode/rules/01-security.md",
+    "../../../CULLA/.opencode/rules/02-coding.md",
+    "../../../CULLA/.opencode/rules/03-project.md",
+    "../../../CULLA/.opencode/rules/04-infra.md",
+    "../../../CULLA/.opencode/rules/05-skills.md"
+  ],
+  "skills": {
+    "paths": ["../../../CULLA/.opencode/skills"]
+  }
+}
