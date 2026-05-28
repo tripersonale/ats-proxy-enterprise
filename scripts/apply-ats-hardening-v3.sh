@@ -54,7 +54,7 @@ log "Setting ownership and permissions"
 install -d -o "$ATS_USER" -g "$ATS_GROUP" -m 0750 "$STATE_DIR" "$LOG_DIR"
 chown -R "$ATS_USER:$ATS_GROUP" "$STATE_DIR" "$LOG_DIR"
 chgrp -R "$ATS_GROUP" "$CONFIG_DIR" "$PLUGIN_CONFIG_DIR" 2>/dev/null || true
-chmod 0750 "$PLUGIN_CONFIG_DIR" 2>/dev/null || true
+chmod 0755 "$PLUGIN_CONFIG_DIR" 2>/dev/null || true
 sh -c "chmod 0640 '$CONFIG_DIR'/* '$PLUGIN_CONFIG_DIR'/*" 2>/dev/null || true
 
 log "Installing health check"
