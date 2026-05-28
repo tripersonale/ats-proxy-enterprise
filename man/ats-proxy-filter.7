@@ -21,7 +21,7 @@ it either forwards the request, returns
 The plugin supports five operating modes, set via
 .B MODE
 in
-.IR /opt/trafficserver/etc/trafficserver/plugin/filter.conf .
+.IR /etc/trafficserver/plugin/filter.conf .
 .TP
 .B off
 Plugin is loaded but transparent. All requests pass through unchanged.
@@ -75,14 +75,14 @@ Use
 to generate entries. Do not write hashes by hand.
 .SH FILES
 .TP
-.I /opt/trafficserver/etc/trafficserver/plugin/filter.conf
+.I /etc/trafficserver/plugin/filter.conf
 Main configuration. Contains
 .B MODE
 and
 .B INCLUDE
 directives pointing to the list files below.
 .TP
-.I /opt/trafficserver/etc/trafficserver/plugin/deny.list
+.I /etc/trafficserver/plugin/deny.list
 Blocked domain patterns. Supports exact match
 .RI ( bad.com )
 and suffix match with
@@ -90,13 +90,13 @@ and suffix match with
 prefix
 .RI ( ".*\e\e.ru$" ).
 .TP
-.I /opt/trafficserver/etc/trafficserver/plugin/whitelist.list
+.I /etc/trafficserver/plugin/whitelist.list
 Allowed domain patterns. Same syntax as deny.list.
 .TP
-.I /opt/trafficserver/etc/trafficserver/plugin/admin.list
+.I /etc/trafficserver/plugin/admin.list
 IP addresses that bypass all filtering and authentication.
 .TP
-.I /opt/trafficserver/etc/trafficserver/plugin/auth.conf
+.I /etc/trafficserver/plugin/auth.conf
 User entries in the format
 .IR "USER <name> <salt>$<sha256>" .
 .SH BUILD

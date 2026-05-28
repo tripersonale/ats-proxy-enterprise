@@ -32,10 +32,10 @@ set -euo pipefail
 ATS_PREFIX="${ATS_PREFIX:-/opt/trafficserver}"
 ATS_USER="${ATS_USER:-ats}"
 ATS_GROUP="${ATS_GROUP:-ats}"
-CONFIG_DIR="${ATS_CONFIG_DIR:-${ATS_PREFIX}/etc/trafficserver}"
+CONFIG_DIR="${ATS_CONFIG_DIR:-/etc/trafficserver}"
 STATE_DIR="${ATS_STATE_DIR:-${ATS_PREFIX}/var/trafficserver}"
 LOG_DIR="${ATS_LOG_DIR:-${ATS_PREFIX}/var/log/trafficserver}"
-PLUGIN_CONFIG_DIR="${ATS_PROXY_CONFIG_DIR:-${ATS_PREFIX}/etc/trafficserver/plugin}"
+PLUGIN_CONFIG_DIR="${ATS_PROXY_CONFIG_DIR:-/etc/trafficserver/plugin}"
 
 log() { printf '[STEP] %s\n' "$1"; }
 ok() { printf '[OK] %s\n' "$1"; }

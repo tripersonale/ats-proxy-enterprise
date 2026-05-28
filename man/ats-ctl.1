@@ -11,7 +11,7 @@ ats-ctl \- manage ATS Proxy Enterprise v3.0 policy
 is the command-line tool for managing the ATS Proxy Enterprise plugin
 configuration without editing files by hand. It reads and writes policy
 files under
-.I /opt/trafficserver/etc/trafficserver/plugin/
+.I /etc/trafficserver/plugin/
 and reloads the Apache Traffic Server service after changes.
 .SH COMMANDS
 .SS init
@@ -60,25 +60,25 @@ Print current mode, deny count, whitelist count, admin count, and user count.
 Restart the ATS service to apply configuration changes.
 .SH FILES
 .TP
-.I /opt/trafficserver/etc/trafficserver/plugin/filter.conf
+.I /etc/trafficserver/plugin/filter.conf
 Main configuration: mode and INCLUDE directives.
 .TP
-.I /opt/trafficserver/etc/trafficserver/plugin/deny.list
+.I /etc/trafficserver/plugin/deny.list
 Blocked domains (one per line).
 .TP
-.I /opt/trafficserver/etc/trafficserver/plugin/whitelist.list
+.I /etc/trafficserver/plugin/whitelist.list
 Allowed domains (one per line).
 .TP
-.I /opt/trafficserver/etc/trafficserver/plugin/admin.list
+.I /etc/trafficserver/plugin/admin.list
 Admin IP addresses (one per line).
 .TP
-.I /opt/trafficserver/etc/trafficserver/plugin/auth.conf
+.I /etc/trafficserver/plugin/auth.conf
 Users with salted SHA-256 password hashes.
 .SH ENVIRONMENT
 .TP
 .B ATS_PROXY_CONFIG_DIR
 Override configuration directory (default:
-.IR /opt/trafficserver/etc/trafficserver/plugin ).
+.IR /etc/trafficserver/plugin ).
 .TP
 .B ATS_PROXY_TEMPLATE_DIR
 Override template directory used by

@@ -32,7 +32,7 @@ cd ats-proxy-enterprise
 # 📁 D'ora in poi, tutti i comandi `scripts/...` e `config/...` partono da qui.
 # 📁 ATS verrà installato in /opt/trafficserver (percorso assoluto, non dentro la repo).
 # 📁 La configurazione ATS andrà in /etc/trafficserver.
-# 📁 La configurazione del plugin andrà in /opt/trafficserver/etc/trafficserver/plugin.
+# 📁 La configurazione del plugin andrà in /etc/trafficserver/plugin.
 ```
 
 > **Offline?** Scarica il [ZIP](https://github.com/tripersonale/ats-proxy-enterprise/archive/refs/heads/main.zip)
@@ -99,19 +99,19 @@ sudo make install
 
 ## 4. Configura come forward proxy
 
-📁 *Il file da editare è `/opt/trafficserver/etc/trafficserver/records.config` (percorso assoluto,
+📁 *Il file da editare è `/etc/trafficserver/records.config` (percorso assoluto,
 non dentro la repo).*
 
 ```bash
 # Backup del file originale
-sudo cp /opt/trafficserver/etc/trafficserver/records.config \
-  /opt/trafficserver/etc/trafficserver/records.config.original
+sudo cp /etc/trafficserver/records.config \
+  /etc/trafficserver/records.config.original
 
 # Disabilita reverse proxy e rendi forward proxy aperto
 sudo sed -i 's/CONFIG proxy.config.reverse_proxy.enabled INT 1/CONFIG proxy.config.reverse_proxy.enabled INT 0/' \
-  /opt/trafficserver/etc/trafficserver/records.config
+  /etc/trafficserver/records.config
 sudo sed -i 's/CONFIG proxy.config.url_remap.remap_required INT 1/CONFIG proxy.config.url_remap.remap_required INT 0/' \
-  /opt/trafficserver/etc/trafficserver/records.config
+  /etc/trafficserver/records.config
 ```
 
 ## 5. Avvia ATS e verifica L0
@@ -160,14 +160,14 @@ bash scripts/compile-plugin.sh \
 
 📁 *Siamo in `~/ats-proxy-enterprise`. I comandi `scripts/ats-ctl` sono relativi
 a questa directory. Il plugin .so viene copiato in `/opt/trafficserver/libexec/`,
-la config in `/opt/trafficserver/etc/trafficserver/plugin/`.*
+la config in `/etc/trafficserver/plugin/`.*
 
 ```bash
 # Copia il plugin compilato nella directory ATS
 sudo cp bin/ats_proxy_filter_v30.so \
   /opt/trafficserver/libexec/trafficserver/ats_proxy_filter_v30.so
 
-# Inizializza la configurazione del plugin in /opt/trafficserver/etc/trafficserver/plugin/
+# Inizializza la configurazione del plugin in /etc/trafficserver/plugin/
 sudo scripts/ats-ctl init
 
 # Scegli una modalita. Qui usiamo deny (blocca solo domini proibiti)
@@ -178,7 +178,7 @@ sudo scripts/ats-ctl deny add httpbin.org
 
 # Registra il plugin in ATS
 echo ats_proxy_filter_v30.so | sudo tee \
-  /opt/trafficserver/etc/trafficserver/plugin.config > /dev/null
+  /etc/trafficserver/plugin.config > /dev/null
 
 # Riavvia ATS per caricare il plugin
 sudo /opt/trafficserver/bin/trafficserver restart
@@ -295,7 +295,7 @@ i template di config in `config/`.*
 ```bash
 for mode in off deny whitelist auth_all auth_nd; do
   echo "=== $mode ==="
-  sudo ATS_PROXY_CONFIG_DIR=/opt/trafficserver/etc/trafficserver/plugin \
+  sudo ATS_PROXY_CONFIG_DIR=/etc/trafficserver/plugin \
     ATS_PROXY_TEMPLATE_DIR=$(pwd)/config \
     bash scripts/ats-mode-test.sh "$mode" 8080 admin testpass
 done
@@ -319,7 +319,7 @@ sudo scripts/ats-ctl mode auth_nd
 sudo scripts/ats-ctl reload
 ```
 
-> **Dove sono le password**: in `/opt/trafficserver/etc/trafficserver/plugin/auth.conf`. Non sono in chiaro:
+> **Dove sono le password**: in `/etc/trafficserver/plugin/auth.conf`. Non sono in chiaro:
 > vengono salvate come `salt$sha256(salt+password)`.
 
 ---
@@ -331,7 +331,7 @@ sudo scripts/ats-ctl reload
 | ATS 9.2.13 | `/opt/trafficserver/` |
 | Config ATS | `/opt/trafficserver/etc/trafficserver/` |
 | Plugin v3.0 `.so` | `/opt/trafficserver/libexec/trafficserver/ats_proxy_filter_v30.so` |
-| Config plugin | `/opt/trafficserver/etc/trafficserver/plugin/` |
+| Config plugin | `/etc/trafficserver/plugin/` |
 | Log ATS | `/opt/trafficserver/var/trafficserver/log/trafficserver/diags.log` |
 | Log audit richieste | `/opt/trafficserver/var/trafficserver/log/trafficserver/audit.log` |
 | Health check | `/opt/ats_health.sh` (eseguito ogni minuto via cron) |

@@ -42,7 +42,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define DEFAULT_CFG_DIR "/opt/trafficserver/etc/trafficserver/plugin"
 #define MAX_ADMIN 64
 #define MAX_DENY 512
 #define MAX_WHITE 512
@@ -83,6 +82,7 @@ static char salts[MAX_USERS][64];
 static char hashes[MAX_USERS][65];
 static int users_cnt = 0;
 static int arg_idx = -1;
+static char cfg_dir[512] = "/etc/trafficserver/plugin";
 
 static int handle_response(TSCont contp, TSEvent event, void *edata);
 
@@ -283,7 +283,7 @@ static void load_file(const char *path, int default_type, int depth) {
 
 static void load_cfg(void) {
   char cfg_path[512];
-  snprintf(cfg_path, sizeof(cfg_path), "%s/filter.conf", DEFAULT_CFG_DIR);
+  snprintf(cfg_path, sizeof(cfg_path), "%s/filter.conf", cfg_dir);
   load_file(cfg_path, 0, 0);
   TSError("[ats_proxy_filter_v30] loaded: mode=%d admin=%d deny=%d whitelist=%d users=%d",
     mode, admin_cnt, deny_cnt, white_cnt, users_cnt);
@@ -449,8 +449,6 @@ static int auth_plugin(TSCont contp, TSEvent event, void *edata) {
 }
 
 void TSPluginInit(int argc, const char *argv[]) {
-  (void)argc;
-  (void)argv;
   TSPluginRegistrationInfo info;
   info.plugin_name = "ats_proxy_filter_v30";
   info.vendor_name = "ATS Proxy Enterprise";
@@ -463,8 +461,15 @@ void TSPluginInit(int argc, const char *argv[]) {
     TSError("[ats_proxy_filter_v30] cannot reserve txn arg");
     return;
   }
+  /* Config dir from plugin.config argument, or default /etc/trafficserver/plugin */
+  if (argc > 1 && argv[1] && argv[1][0] == '/') {
+    char *slash;
+    snprintf(cfg_dir, sizeof(cfg_dir), "%s", argv[1]);
+    slash = strrchr(cfg_dir, '/');
+    if (slash && strcmp(slash, "/filter.conf") == 0) *slash = '\0';
+  }
   load_cfg();
   TSCont contp = TSContCreate(ATS_EVENT_FUNC(auth_plugin), NULL);
   TSHttpHookAdd(TS_HTTP_OS_DNS_HOOK, contp);
-  TSError("[ats_proxy_filter_v30] plugin loaded, arg_idx=%d", arg_idx);
+  TSError("[ats_proxy_filter_v30] plugin loaded, cfg_dir=%s, arg_idx=%d", cfg_dir, arg_idx);
 }

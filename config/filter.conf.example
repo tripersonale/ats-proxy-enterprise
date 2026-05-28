@@ -1,6 +1,6 @@
 # ATS Proxy Enterprise v3.0 - configurazione principale
 #
-# Copiare in: /opt/trafficserver/etc/trafficserver/plugin/filter.conf
+# Copiare in: /etc/trafficserver/plugin/filter.conf
 # Proprietario consigliato: root:trafficserver
 # Permessi consigliati: 0640
 #
@@ -15,7 +15,7 @@ MODE auth_nd
 
 # I file separati tengono leggibile ogni responsabilita.
 # Forma esplicita: INCLUDE <tipo> <path>
-INCLUDE admin /opt/trafficserver/etc/trafficserver/plugin/admin.list
-INCLUDE deny /opt/trafficserver/etc/trafficserver/plugin/deny.list
-INCLUDE whitelist /opt/trafficserver/etc/trafficserver/plugin/whitelist.list
-INCLUDE /opt/trafficserver/etc/trafficserver/plugin/auth.conf
+INCLUDE admin /etc/trafficserver/plugin/admin.list
+INCLUDE deny /etc/trafficserver/plugin/deny.list
+INCLUDE whitelist /etc/trafficserver/plugin/whitelist.list
+INCLUDE /etc/trafficserver/plugin/auth.conf

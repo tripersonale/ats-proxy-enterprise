@@ -31,7 +31,7 @@
 
 set -euo pipefail
 
-CONFIG_DIR="${ATS_PROXY_CONFIG_DIR:-/opt/trafficserver/etc/trafficserver/plugin}"
+CONFIG_DIR="${ATS_PROXY_CONFIG_DIR:-/etc/trafficserver/plugin}"
 SERVICE="${ATS_PROXY_SERVICE:-trafficserver}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
