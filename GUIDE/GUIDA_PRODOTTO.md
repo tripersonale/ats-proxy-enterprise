@@ -1,5 +1,11 @@
 # ATS Proxy Enterprise v3.0 — Presentazione Prodotto
 
+> **Powered by Apache Traffic Server** — ATS Proxy Enterprise è un prodotto
+> indipendente costruito su Apache Traffic Server (Apache 2.0). Il plugin,
+> gli script e la documentazione sono codice originale sotto licenza FEL-1.0.
+> "Apache", "Apache Traffic Server" e il logo Apache feather sono marchi
+> registrati di The Apache Software Foundation. Vedi [THIRD_PARTY.md](THIRD_PARTY.md).
+
 ## Cos'e
 
 ATS Proxy Enterprise e un **forward proxy HTTP/HTTPS con URL filtering,

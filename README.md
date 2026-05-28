@@ -2,9 +2,14 @@
 
 Forward proxy HTTP/HTTPS con URL filtering, autenticazione e hardening enterprise.
 
-**ATS 9.2.13 LTS** · **Ubuntu 26.04 LTS** · **Hardening 25/25** · **5 modalità plugin**
+**Powered by Apache Traffic Server 9.2.13 LTS** · **Ubuntu 26.04 LTS** · **Hardening 25/25** · **5 modalità plugin**
 
-[![License: FEL-1.0](https://img.shields.io/badge/license-FEL--1.0-blue)](LICENSE.md)
+[![License: FEL-1.0](https://img.shields.io/badge/license-FEL--1.0-blue)](LICENSE.md) [![ATS: Apache 2.0](https://img.shields.io/badge/ATS-Apache%202.0-green)](THIRD_PARTY.md)
+
+> **Nota**: ATS Proxy Enterprise NON è un prodotto Apache. Il plugin, gli script e
+> la documentazione sono codice originale sotto licenza FEL-1.0. Apache Traffic Server
+> è un progetto della Apache Software Foundation, qui ridistribuito in forma compilata
+> sotto licenza Apache 2.0. Vedi [THIRD_PARTY.md](THIRD_PARTY.md).
 
 ## Installa in 1 comando
 
