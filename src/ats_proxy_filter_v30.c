@@ -42,7 +42,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define DEFAULT_CFG_DIR "/etc/ats-proxy"
+#define DEFAULT_CFG_DIR "/opt/trafficserver/etc/trafficserver/plugin"
 #define MAX_ADMIN 64
 #define MAX_DENY 512
 #define MAX_WHITE 512
