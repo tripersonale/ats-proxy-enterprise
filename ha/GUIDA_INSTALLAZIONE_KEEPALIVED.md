@@ -2,18 +2,19 @@
 
 ## Ubuntu 24.04 LTS (Noble) e 26.04 LTS (Resolute Raccoon)
 
-**Versione 1.0 — 28 Maggio 2026**
+**Versione 1.1 — 28 Maggio 2026**
 
 ---
 
 ## Prima di iniziare
 
-- Due (o più) VM ATS funzionanti. Riferimento: [GUIDA_INSTALLAZIONE.md](./GUIDA_INSTALLAZIONE.md) o [GUIDA_INSTALLAZIONE_ATS_LTS.md](./GUIDA_INSTALLAZIONE_ATS_LTS.md).
+- Due (o piu) VM ATS funzionanti. Riferimento: [GUIDA_INSTALLAZIONE.md](../GUIDA_INSTALLAZIONE.md) o [GUIDA_INSTALLAZIONE_ATS_LTS.md](../GUIDA_INSTALLAZIONE_ATS_LTS.md).
+- IP statici configurati su entrambe le VM via **netplan**. Vedi [GUIDA_NETPLAN_IP.md](./GUIDA_NETPLAN_IP.md) per la procedura dettagliata.
 - Un IP virtuale (VIP) libero nella stessa subnet delle VM ATS.
 - Accesso **sudo** su tutte le VM.
 - Firewall configurato con il VIP come eccezione (se UFW attivo).
 
-**Tempo stimato**: 15-20 minuti per nodo.
+**Tempo stimato**: 15-20 minuti per nodo (esclusa configurazione IP/netplan).
 
 ---
 
@@ -41,9 +42,109 @@
 | **keepalived** | Gestisce VRRP: elegge MASTER, sposta il VIP. |
 | **vrrp_script** | Health check: se ATS muore, keepalived rilascia il VIP. |
 | **VRRP** | Protocollo L2 (multicast 224.0.0.18): priorita + heartbeat. |
+| **netplan** | Configurazione IP statica su ogni VM (prerequisito). |
 
 **Regola**: il VIP segue la VM con priorita piu alta che ha ATS attivo.
 Se il MASTER perde ATS, il VIP migra sul BACKUP in <3 secondi.
+
+---
+
+## — Preparazione IP Linux (netplan)
+
+Prima di installare keepalived, ogni VM ATS deve avere un **IP statico**.
+Su Ubuntu 24.04+ la configurazione di rete si fa con **netplan** (YAML in `/etc/netplan/`).
+
+### Esempio netplan — VM ATS-1 (MASTER, IP .31)
+
+```bash
+# Scopri il nome file corrente
+ls /etc/netplan/
+# Tipicamente: 00-installer-config.yaml, 50-cloud-init.yaml, oppure 01-netcfg.yaml
+
+# Crea/modifica il file (ESEMPIO — adatta alla tua rete)
+sudo tee /etc/netplan/99-ats.yaml > /dev/null << 'EOF'
+network:
+  version: 2
+  ethernets:
+    eth0:                         # Sostituire con il nome dell'interfaccia reale
+      dhcp4: false
+      addresses:
+        - 192.168.1.31/24         # IP statico della VM
+      routes:
+        - to: default
+          via: 192.168.1.1        # Gateway della rete
+      nameservers:
+        addresses:
+          - 1.1.1.1               # DNS primario
+          - 8.8.8.8               # DNS secondario
+EOF
+```
+
+### Esempio netplan — VM ATS-2 (BACKUP, IP .32)
+
+Identico al MASTER, cambia solo `addresses`:
+
+```bash
+sudo tee /etc/netplan/99-ats.yaml > /dev/null << 'EOF'
+network:
+  version: 2
+  ethernets:
+    eth0:
+      dhcp4: false
+      addresses:
+        - 192.168.1.32/24         # IP statico del BACKUP
+      routes:
+        - to: default
+          via: 192.168.1.1
+      nameservers:
+        addresses:
+          - 1.1.1.1
+          - 8.8.8.8
+EOF
+```
+
+### ⚠️ IMPORTANTE — Prima di applicare netplan
+
+```bash
+# 1. Rimuovi eventuali file netplan in conflitto (es. quello di cloud-init)
+ls /etc/netplan/
+# Se esiste 50-cloud-init.yaml e NON lo usi, rinominalo:
+sudo mv /etc/netplan/50-cloud-init.yaml /etc/netplan/50-cloud-init.yaml.disabled
+
+# 2. Verifica il nome dell'interfaccia
+ip -br a | grep -v lo | awk '{print $1}'
+# Output tipico: eth0, ens18, enp0s3, enX0, ...
+
+# 3. Se il nome NON e eth0, correggi il file YAML sopra
+sudo sed -i 's/eth0/ens18/g' /etc/netplan/99-ats.yaml   # esempio
+
+# 4. Verifica la sintassi netplan (SENZA applicare)
+sudo netplan try
+# Premi INVIO se tutto ok, altrimenti aspetta 120s per il rollback automatico
+
+# 5. Applica
+sudo netplan apply
+```
+
+### ✅ Verifica IP dopo netplan
+
+```bash
+# L'IP statico deve comparire
+ip addr show eth0 | grep "inet "
+# Atteso: inet 192.168.1.31/24 ...
+
+# Il gateway deve essere raggiungibile
+ping -c 2 192.168.1.1
+
+# DNS funziona
+nslookup google.com 1.1.1.1
+```
+
+> **Nota**: il VIP (`192.168.1.99` nell'esempio) **non** va configurato in netplan.
+> Viene gestito esclusivamente da keepalived. La VM lo aggiunge/rimuove dinamicamente.
+
+Per una guida netplan completa con scenari multipli (cloud image, DHCP→statico, VLAN, bond),
+vedi [GUIDA_NETPLAN_IP.md](./GUIDA_NETPLAN_IP.md).
 
 ---
 
@@ -231,7 +332,7 @@ Tutti gli altri parametri (`virtual_router_id`, `auth_pass`, `virtual_ipaddress`
 
 | Parametro | Default nella guida | Dove modificare |
 |-----------|-------------------|-----------------|
-| `interface` | `eth0` | Sostituire con `ip -br a` → nome interfaccia reale |
+| `interface` | `eth0` | Sostituire con `ip -br a` -> nome interfaccia reale |
 | `virtual_ipaddress` | `192.168.1.99/24` | Sostituire con il VIP scelto |
 | `auth_pass` | `ats_vrrp_secret` | Sostituire con una password forte (max 8 char VRRPv2) |
 | `virtual_router_id` | `51` | Scegliere un ID libero nella subnet (0-255) |
@@ -385,7 +486,7 @@ sudo ufw reload
 ### 7.3 Sysctl — Ottimizzazioni VRRP
 
 ```bash
-sudo tee -a /etc/sysctl.d/99-keepalived.conf > /dev/null << 'EOF'
+sudo tee /etc/sysctl.d/99-keepalived.conf > /dev/null << 'EOF'
 # Ottimizzazioni keepalived/VRRP
 net.ipv4.ip_nonlocal_bind = 1      # Permette bind a IP non locali (VIP)
 net.ipv4.conf.all.arp_ignore = 1   # Risponde ARP solo su interfacce con IP locale
@@ -407,7 +508,7 @@ sudo sysctl --system
 
 ---
 
-## 8. Più di Due Nodi (N+1)
+## 8. Piu di Due Nodi (N+1)
 
 Per N nodi ATS, keepalived supporta priorita scalare:
 
@@ -434,12 +535,14 @@ Aggiungere un terzo nodo richiede solo:
 | | `keepalived.conf` ha errori di sintassi | `keepalived --dont-fork --log-console --check-config` |
 | VIP su entrambi i nodi (split-brain) | `auth_pass` diversa tra MASTER e BACKUP | Allineare `auth_pass` |
 | | Multicast bloccato sulla rete (switch/cloud) | Verificare che la rete permetta 224.0.0.18 |
-| | `advert_int` >=2 secondi → heartbeat persi | Ridurre a `1` |
+| | `advert_int` >=2 secondi -> heartbeat persi | Ridurre a `1` |
+| | Netplan assegna il VIP staticamente a una VM | Il VIP NON deve comparire in `/etc/netplan/*.yaml`. Solo keepalived lo gestisce |
 | Failover non avviene quando ATS muore | Script `check_ats.sh` non eseguibile | `chmod 755 /etc/keepalived/scripts/check_ats.sh` |
-| | `ATS_PORT` errata nello script | Verificare con `ss -tlnp | grep traffic_server` |
+| | `ATS_PORT` errata nello script | Verificare con `ss -tlnp \| grep traffic_server` |
 | | `weight -50` non basta (priorita BACKUP resta piu alta) | Aumentare `fall` o diminuire `priority` BACKUP |
 | `notify` non scrive in syslog | `logger` non nel PATH | Usare percorso assoluto: `/usr/bin/logger` |
 | keepalived non parte | Portaudio/SNMP installato male | `sudo apt install --reinstall keepalived` |
+| Host irraggiungibile dopo netplan apply | Gateway errato o file duplicati in `/etc/netplan/` | Rimuovere file cloud-init duplicati, verificare gateway con `ip route` |
 
 ### 9.1 Debug rapido
 
@@ -462,6 +565,14 @@ sudo /etc/keepalived/scripts/check_ats.sh && echo "OK" || echo "FAIL"
 # 6. VRRP traffic arriva?
 sudo tcpdump -i eth0 -c 5 proto 112
 # Atteso: pacchetti VRRP in arrivo dal peer
+
+# 7. Configurazione netplan e valida?
+sudo netplan try --timeout 10
+# Premi INVIO se ok, altrimenti rollback automatico
+
+# 8. Tabella di routing corretta?
+ip route show
+# Deve mostrare default via <gateway>
 ```
 
 ---
@@ -488,7 +599,7 @@ indipendentemente da quale nodo possiede il VIP.
 | Autenticazione Basic Auth | Trasparente: il client autentica sempre contro il VIP |
 | ACL per IP amministratore | Se usi `ATS_ADMIN_IPS`, assicurati che includa gli IP di tutte le VM ATS (non solo il VIP) |
 | File di configurazione plugin | Identici su entrambi i nodi. Usare `scp` per sincronizzarli |
-| Log di audit | Ogni nodo scrive i propri log. Per vista unificata: rsyslog centralizzato (vedi GUIDA_OPERATIVA.md §9) |
+| Log di audit | Ogni nodo scrive i propri log. Per vista unificata: rsyslog centralizzato (vedi GUIDA_OPERATIVA.md S9) |
 
 ```bash
 # Sincronizzare la configurazione plugin da MASTER a BACKUP
@@ -521,6 +632,7 @@ sudo ufw delete allow in on eth0 to 224.0.0.18 proto vrrp
 
 | File | Nodo | Scopo |
 |------|------|-------|
+| `/etc/netplan/99-ats.yaml` | Entrambi | IP statico (diverso per ogni VM) |
 | `/etc/keepalived/keepalived.conf` | Entrambi | Configurazione VRRP (diverso per MASTER/BACKUP) |
 | `/etc/keepalived/scripts/check_ats.sh` | Entrambi | Health check ATS |
 | `/etc/sysctl.d/99-keepalived.conf` | Entrambi | Ottimizzazioni kernel per VRRP |
@@ -559,4 +671,13 @@ diff <(ssh root@192.168.1.31 cat /etc/trafficserver/plugin.config) \
 
 ---
 
-*Guida da validare su due VM ATS affiancate. Riferimento principale: [GUIDA_INSTALLAZIONE.md](./GUIDA_INSTALLAZIONE.md).*
+## Riferimenti
+
+- [GUIDA_INSTALLAZIONE.md](../GUIDA_INSTALLAZIONE.md) — Installazione ATS completa
+- [GUIDA_INSTALLAZIONE_ATS_LTS.md](../GUIDA_INSTALLAZIONE_ATS_LTS.md) — Installazione rapida ATS
+- [GUIDA_NETPLAN_IP.md](./GUIDA_NETPLAN_IP.md) — Configurazione IP Linux via netplan
+- [GUIDA_OPERATIVA.md](../GUIDA_OPERATIVA.md) — Operativita quotidiana ATS
+
+---
+
+*Guida da validare su due VM ATS affiancate. Riferimento principale: [GUIDA_INSTALLAZIONE.md](../GUIDA_INSTALLAZIONE.md).*
